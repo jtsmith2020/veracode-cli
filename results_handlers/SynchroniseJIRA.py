@@ -71,43 +71,44 @@ class SynchroniseJIRA(ResultsHandler):
         print("Process Veracode Issue")
         print("==================================")
         print("")
-        issue = issue.strip()
+        #issue = issue.strip()
         #re.sub('[^A-Za-z0-9]+', '', issue)
         #issue = issue.replace('&#xd;&#xa;','\n')
         #print("issue is "+issue)
         #issue = issue.replace('&#xa;', ' ')
         #issue = issue.replace('&#xd;', ' ')
         #issue = issue.replace("\n\n","\n")
+        #print(str(issue))
         dr_dict = xmltodict.parse(str(issue))
         #print("xmltodict\n")
         #for dkey, value in dr_dict.items():
         #     print("  " + dkey + " = " + str(value)+"\n")
-        print("Severity is: "+dr_dict['flaw']['@severity'])
-        print("Category name is: "+dr_dict['flaw']['@categoryname'])
-        print("Count is "+dr_dict['flaw']['@count'])
-        print("Issue id is "+dr_dict['flaw']['@issueid'])
-        print("Module is "+dr_dict['flaw']['@module'])
-        print("Type is "+dr_dict['flaw']['@type'])
-        print("Description is "+dr_dict['flaw']['@description'])
-        print("Note is "+dr_dict['flaw']['@note'])
-        print("CWE id is "+dr_dict['flaw']['@cweid'])
-        print("Remediation Effort is " + dr_dict['flaw']['@remediationeffort'])
-        print("Exploit Level is " + dr_dict['flaw']['@exploitLevel'])
-        print("Category id is " + dr_dict['flaw']['@categoryid'])
-        print("PCI related is " + dr_dict['flaw']['@pcirelated'])
-        print("Date of first occurrence is " + dr_dict['flaw']['@date_first_occurrence'])
-        print("Remediation Status is " + dr_dict['flaw']['@remediation_status'])
-        print("cia impact is " + dr_dict['flaw']['@cia_impact'])
-        print("Grace Period expirs on " + dr_dict['flaw']['@grace_period_expires'])
-        print("Affects policy compliance " + dr_dict['flaw']['@affects_policy_compliance'])
-        print("Mitigation status " + dr_dict['flaw']['@mitigation_status'])
-        print("Mitigation status description " + dr_dict['flaw']['@mitigation_status_desc'])
-        print("Source file is " + dr_dict['flaw']['@sourcefile'])
-        print("Line number is " + dr_dict['flaw']['@line'])
-        print("Source file path is " + dr_dict['flaw']['@sourcefilepath'])
-        print("Scope is " + dr_dict['flaw']['@scope'])
-        print("Function protoype is " + dr_dict['flaw']['@functionprototype'])
-        print("Function relative location is " + dr_dict['flaw']['@functionrelativelocation'])
+        # print("Severity is: "+dr_dict['flaw']['@severity'])
+        # print("Category name is: "+dr_dict['flaw']['@categoryname'])
+        # print("Count is "+dr_dict['flaw']['@count'])
+        # print("Issue id is "+dr_dict['flaw']['@issueid'])
+        # print("Module is "+dr_dict['flaw']['@module'])
+        # print("Type is "+dr_dict['flaw']['@type'])
+        # print("Description is "+dr_dict['flaw']['@description'])
+        # print("Note is "+dr_dict['flaw']['@note'])
+        # print("CWE id is "+dr_dict['flaw']['@cweid'])
+        # print("Remediation Effort is " + dr_dict['flaw']['@remediationeffort'])
+        # print("Exploit Level is " + dr_dict['flaw']['@exploitLevel'])
+        # print("Category id is " + dr_dict['flaw']['@categoryid'])
+        # print("PCI related is " + dr_dict['flaw']['@pcirelated'])
+        # print("Date of first occurrence is " + dr_dict['flaw']['@date_first_occurrence'])
+        # print("Remediation Status is " + dr_dict['flaw']['@remediation_status'])
+        # print("cia impact is " + dr_dict['flaw']['@cia_impact'])
+        # print("Grace Period expirs on " + dr_dict['flaw']['@grace_period_expires'])
+        # print("Affects policy compliance " + dr_dict['flaw']['@affects_policy_compliance'])
+        # print("Mitigation status " + dr_dict['flaw']['@mitigation_status'])
+        # print("Mitigation status description " + dr_dict['flaw']['@mitigation_status_desc'])
+        # print("Source file is " + dr_dict['flaw']['@sourcefile'])
+        # print("Line number is " + dr_dict['flaw']['@line'])
+        # print("Source file path is " + dr_dict['flaw']['@sourcefilepath'])
+        # print("Scope is " + dr_dict['flaw']['@scope'])
+        # print("Function protoype is " + dr_dict['flaw']['@functionprototype'])
+        # print("Function relative location is " + dr_dict['flaw']['@functionrelativelocation'])
         # Veracode
         # Flaw(static): OS
         # Command
@@ -135,11 +136,15 @@ class SynchroniseJIRA(ResultsHandler):
         descstr = "CWE: "+str(dr_dict['flaw']['@cweid'])+" "+str(dr_dict['flaw']['@categoryname'])+"\n\nModule: "+str(dr_dict['flaw']['@module'])+"\n\nSource: "+\
                   str(dr_dict['flaw']['@sourcefile'])+":"+str(dr_dict['flaw']['@line'])+"\n\nAttack Vector: "+str(dr_dict['flaw']['@type'])+"\n\nDescription: "+\
                   str(dr_dict['flaw']['@description'])
-        new_issue = auth_jira.create_issue(project=config["jira_project"], summary=summarystr,
-                                       description=descstr, issuetype={'name': 'Bug'})
-                                           #print(dr_dict)
-        #new_issue = auth_jira.create_issue(project=config["jira_project"], summary='New issue from jira-python',
-        #                               description=str(issue[0:50]), issuetype={'name': 'Story'})
+        searchstring = "project="+str(config["jira_project"])+" and summary~\'Flaw "+str(dr_dict['flaw']['@issueid'])+"\'"
+        print("Search string is: "+searchstring)
+        is_my_issue_there = auth_jira.search_issues(searchstring)
+        if is_my_issue_there:
+            print("Issue already exists: "+str(is_my_issue_there))
+            #maybe update if things have changed in the future
+        else:
+            new_issue = auth_jira.create_issue(project=config["jira_project"], summary=summarystr,
+                                         description=descstr, issuetype={'name': 'Bug'})
 
     def execute(self, api, activity, config):
         print("")
@@ -152,7 +157,7 @@ class SynchroniseJIRA(ResultsHandler):
         # We should come up with at better way to get/store the Jira creds
         auth_jira = JIRA(auth=(config["jira_user"], config["jira_password"]),server=config["jira_base_url"])
         #temporarily hardcode the build_id
-        activity["build_id"] = "2931860"
+        #activity["build_id"] = "2937308"
         print("activity_build_id: "+activity["build_id"])
         #print(api.get_build_list(activity["app_id"]))
         #print(api.get_build_info(activity["app_id"],activity["build_id"]))
@@ -180,9 +185,14 @@ class SynchroniseJIRA(ResultsHandler):
         #get the positions of the flaw starting points
         starts = [match.start() for match in re.finditer(re.escape("<flaw severity"), strdr)]
         for index in starts:
+            #print(strdr[index:])
             # for each one look for the end of the flaw
             end = strdr.find("><", index, len(strdr))
-            issue = strdr[index:(end+1)]
+            #mitigations changes the record for a flaw.. maybe be more sophisticated later
+            if "mitigations" in strdr[index:(end+15)]:
+                issue = strdr[index:end]+" />"
+            else:
+                issue = strdr[index:(end+1)]
             # now process the flaw to create an issue
             self.process_issue(self, auth_jira, config, issue)
             #for testing break after one
