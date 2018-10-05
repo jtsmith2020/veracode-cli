@@ -150,8 +150,7 @@ class SynchroniseJIRA(ResultsHandler):
         # (see https://developer.atlassian.com/display/DOCS/Installing+the+Atlassian+Plugin+SDK for details).
         # Override this with the options parameter.
         # We should come up with at better way to get/store the Jira creds
-        #auth_jira = JIRA(auth=(config["jira_user"], config["jira_password"]),server=config["jira_base_url"])
-        auth_jira = JIRA(auth=('hsclear2014@gmail.com', ':0OGoj=H6mWKNlfJ'),server=config["jira_base_url"])
+        auth_jira = JIRA(auth=(config["jira_user"], config["jira_password"]),server=config["jira_base_url"])
         #temporarily hardcode the build_id
         activity["build_id"] = "2931860"
         print("activity_build_id: "+activity["build_id"])
