@@ -3,11 +3,14 @@ from helpers.exceptions import VeracodeError
 from antfs import AntPatternDirectoryScanner
 from datetime import datetime
 import os
+import time
 
 class SastPolicyScanner(Scanner):
+    verbose = True
+    display_name = "SAST Policy Scan"
+    description = "Run a Policy Scan using Veracode SAST"
+
     def __init__(self):
-        self.display_name = "SAST Policy Scan"
-        self.description = "Run a Policy Scan using Veracode SAST"
         self.type = type(self).__name__
 
     def configure(self, api):
@@ -44,7 +47,7 @@ class SastPolicyScanner(Scanner):
             finished = "y" == input("      Continue with these patterns? (y/n)")
 
         """ MODULES TO SELECT """
-        print("      Modules to Select (use Ant Style Patterns, leave blank to use Veracode Default)")
+        print("      Modules to Select (use REGULAR EXPRESSIONS, leave blank to use Veracode Default)")
         config["module_include_pattern"] = input("        Module Include File Pattern: ")
         if "" == config["module_include_pattern"]:
             config["module_include_pattern"] = None
@@ -61,9 +64,11 @@ class SastPolicyScanner(Scanner):
         return config
 
     def execute(self, api, activity, config):
-        print("Executing SastPolicyScanner with:")
-        for key, value in config.items():
-            print("  " + key + " = " + str(value))
+        if self.verbose:
+            print("Executing " + self.display_name + " with:")
+            for key, value in config.items():
+                print("  " + key + " = " + str(value))
+            print("")
 
         """ Create the Build with the correct Name format """
         scan_name = ""
@@ -74,27 +79,59 @@ class SastPolicyScanner(Scanner):
         if "" == scan_name:
             print("INVALID SCAN NAME")
             raise VeracodeError("Invalid Scan Name")
+
+        print("Creating new Scan with name: " + scan_name)
         activity["build_id"] = api.create_build(activity["app_id"], scan_name)
         if activity["build_id"] is None:
             raise VeracodeError("Cannot Create New Build")
-        print("build id = " + activity["build_id"])
+        print("  (scan id = " + activity["build_id"] + ")")
 
         """ Upload the files """
+        print("Uploading Files", end="")
         ds = AntPatternDirectoryScanner(".", config["upload_include_pattern"], config["upload_exclude_pattern"])
         for filename in ds.scan():
+            print(".", end="")
             api.upload_file(activity["app_id"], filename)
+        print("")
 
         """ Should we enable Auto-Scan ? """
+        print("Pre-Scan Starting", end="")
         if config["module_include_pattern"] is None:
             """ Yes - enable AutoScan and lets get going """
-            print("auto scan route")
             api.begin_prescan(activity["app_id"], "true")
         else:
-            """ No - need to wait for pre-scan to complete... """
-            print("module selection route")
+            """ No - disable auto-scan and get started  """
+            api.begin_prescan(activity["app_id"], "false")
+        """ Now we wait for prescan to complete - check every 30 seconds """
+        modules = api.get_modules(activity["app_id"], build_id=activity["build_id"])
+        while modules is None:
+            print(".", end="")
+            time.sleep(30)
+            modules = api.get_modules(activity["app_id"], build_id=activity["build_id"])
+        print("")
+        print("Pre-Scan Complete")
+        print("Full Scan Starting", end="")
+        if config["module_include_pattern"] is not None:
+            """ now we need to select the modules and start the scan... """
+            print("")
+            print("module selection code not writen")
 
-        print("Pre-Scan In Progress...")
-        api.get_prescan_status(activity["app_id"], build_id=activity["build_id"])
+            """ XXXX NOT DONE YET XXXX  """
+            print("Full Scan Running", end="")
+
+        """ Do we need to wait for the scan to complete? """
+        if config["wait_for_complete"] == True:
+            """ OK, now we wait for the scan to complete... """
+            results_ready = api.results_ready(activity["app_id"], activity["build_id"])
+            while not results_ready:
+                print(".", end="")
+                time.sleep(30)
+                results_ready = api.results_ready(activity["app_id"], activity["build_id"])
+            print("")
+            print("Full Scan Complete")
+        else:
+            print("")
+            print("Not waiting for Full Scan to Complete")
 
         return False
 

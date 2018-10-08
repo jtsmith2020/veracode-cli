@@ -83,15 +83,40 @@ class VeracodeAPI:
         return self._get_request(self.baseurl + "/5.0/beginprescan.do", params={"app_id": app_id,
                                                                                 "auto_scan": auto_scan})
 
-    def get_prescan_status(self, app_id, build_id=None, sandbox_id=None):
+    def get_modules(self, app_id, build_id=None, sandbox_id=None):
         parameters = {"app_id": app_id}
         if build_id is not None:
             parameters["build_id"] = str(build_id)
         if sandbox_id is not None:
             parameters["sandbox_id"] = str(sandbox_id)
         prescan_xml = self._get_request(self.baseurl + "/5.0/getprescanresults.do", params=parameters)
-        print(prescan_xml)
-        return True
+        if b"<error>" in prescan_xml:
+            return None
+        else:
+            ns = {'vc': 'https://analysiscenter.veracode.com/schema/2.0/prescanresults'}
+            root = ET.fromstring(prescan_xml)
+            find_modules_query = "./vc:module[@has_fatal_errors='false']"
+            module_nodes = root.findall(find_modules_query, ns)
+            retval = {}
+            for module_node in module_nodes:
+                retval[module_node.attrib.get("name")] = module_node.attrib.get("id")
+            return retval
+
+    def results_ready(self, app_id, build_id):
+        """ Returns boolean for whether or not the build has results ready."""
+        build_info_xml =  self._get_request(self.baseurl + "/5.0/getbuildinfo.do", params={"app_id": app_id,
+                                                                              "build_id": build_id})
+        ns = {'vc': 'https://analysiscenter.veracode.com/schema/4.0/buildinfo'}
+        root = ET.fromstring(build_info_xml)
+        find_build_query = "./vc:build"
+        build_node = root.findall(find_build_query, ns)
+        if len(build_node) == 1:
+            ready = "true" == build_node[0].attrib.get("results_ready")
+        else:
+            ready = False
+        return ready
+
+
 
     def get_app_list(self):
         """Returns all application profiles."""
@@ -116,9 +141,6 @@ class VeracodeAPI:
                                                                                 "include_in_progress": True,
                                                                                 "report_changed_since": report_changed_since})
 
-    def get_detailed_report(self, app_id):
-        """Returns application profile info for a given app ID."""
-        return self._get_request(self.baseurl + "/5.0/detailedreport.do", params={"app_id": app_id})
 
     def get_app_info(self, app_id):
         """Returns application profile info for a given app ID."""
