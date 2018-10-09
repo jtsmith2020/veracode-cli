@@ -15,7 +15,9 @@ from requests.adapters import HTTPAdapter
 
 from veracode_api_signing.plugin_requests import RequestsAuthPluginVeracodeHMAC
 from helpers.exceptions import VeracodeAPIError
+from helpers.exceptions import VeracodeError
 import xml.etree.ElementTree as ET
+import configparser
 
 
 class VeracodeAPI:
@@ -23,8 +25,26 @@ class VeracodeAPI:
         self.baseurl = "https://analysiscenter.veracode.com/api"
         requests.Session().mount(self.baseurl, HTTPAdapter(max_retries=3))
         self.proxies = proxies
-        self.api_key_id = os.environ.get("VID")
-        self.api_key_secret = os.environ.get("VKEY")
+        if vid is None or vkey is None:
+            """ OK, lets try the environment variables... """
+            self.api_key_id = os.environ.get("VID")
+            self.api_key_secret = os.environ.get("VKEY")
+            if self.api_key_id is None or self.api_key_id == "" or self.api_key_secret is None or self.api_key_secret == "":
+                """ OK, try for the credentials file instead... """
+                auth_file = os.path.join(os.path.expanduser("~"), '.veracode', 'credentials')
+                if not os.path.exists(auth_file):
+                    raise VeracodeError("Missing Credentials File, have you set up ~/.veracode/credentials?")
+                config = configparser.ConfigParser()
+                config.read(auth_file)
+                credentials_section_name = os.environ.get("VERACODE_API_PROFILE", "default")
+                self.api_key_id = config.get(credentials_section_name, "VERACODE_API_KEY_ID")
+                self.api_key_secret = config.get(credentials_section_name, "VERACODE_API_KEY_SECRET")
+                if self.api_key_id is None or self.api_key_secret is None:
+                    raise VeracodeError("Unable to get Credentials")
+        else:
+            """ use the id and key supplied as parameters """
+            self.api_key_id = vid
+            self.api_key_secret = vkey
 
     def _upload_request(self, url, filename, params=None):
         try:
@@ -116,7 +136,11 @@ class VeracodeAPI:
             ready = False
         return ready
 
-
+    def add_comment(self, build_id, flaw_id, comment):
+        return self._get_request(self.baseurl + "/updatemitigationinfo.do", params={"build_id": build_id,
+                                                                                "action": "comment",
+                                                                                "comment": comment,
+                                                                                "flaw_id_list": flaw_id})
 
     def get_app_list(self):
         """Returns all application profiles."""

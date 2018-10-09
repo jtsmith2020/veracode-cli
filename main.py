@@ -7,6 +7,9 @@ from helpers.base_results_handler import ResultsHandler
 import argparse
 import xml.etree.ElementTree as ET
 import json
+import yaml
+
+
 
 
 ########################################################################################################################
@@ -70,7 +73,7 @@ def configure(api):
         if s != len(Scanner.scanners):
             activity["scanner"] = Scanner.scanners[s].configure(api)
         else:
-            activity[:"scanner"] = None
+            activity["scanner"] = None
 
         """ Lets add any results handlers """
         print("Results Handler(s)")
@@ -89,8 +92,12 @@ def configure(api):
             finished = True
 
     """ Write the configuration to the veracode.config file """
-    with open('veracode.config', 'w') as outfile:
-        json.dump(config, outfile)
+#    with open('veracode.config', 'w') as outfile:
+#        json.dump(config, outfile)
+
+    """ Write the configuration to the veracode.yml file """
+    with open('veracode.yaml', 'w') as outfile:
+        yaml.dump(config, outfile)
 
 
 ########################################################################################################################
@@ -108,8 +115,11 @@ def execute(api, activities):
     print("")
 
     config = []
-    with open('veracode.config') as json_file:
-        config = json.load(json_file)
+#    with open('veracode.config') as json_file:
+#        config = json.load(json_file)
+
+    with open('veracode.yaml') as yaml_file:
+        config = yaml.load(yaml_file)
 
     for activity in config:
         if activities is None or activities == activity["name"]:
@@ -140,7 +150,7 @@ if __name__ == "__main__":
         parser.add_argument("-v", "--vid", type=str, help="API ID for the Veracode Platform user")
         parser.add_argument("-k", "--vkey", type=str, help="API Key for the Veracode Platform user")
         parser.add_argument("-s", "--setup", type=str, choices=["credentials", "configure"], help="Setup the tool")
-        parser.add_argument("-a", "--activity", type=str, help="Execute one or more Activities")
+        parser.add_argument("-a", "--activity", type=str, help="Execute one or more Activities. If not specified then all Activities will be executed")
         args = parser.parse_args()
 
         api = VeracodeAPI(None, args.vid, args.vkey)

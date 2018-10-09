@@ -5,10 +5,10 @@ from datetime import datetime
 import os
 import time
 
-class SastPolicyScanner(Scanner):
+class SastScanner(Scanner):
     verbose = True
-    display_name = "SAST Policy Scan"
-    description = "Run a Policy Scan using Veracode SAST"
+    display_name = "SAST Scan"
+    description = "Run a Scan using Veracode SAST"
 
     def __init__(self):
         self.type = type(self).__name__
@@ -53,7 +53,7 @@ class SastPolicyScanner(Scanner):
             config["module_include_pattern"] = None
         config["module_exclude_pattern"] = input("        Module Exclude File Pattern: ")
         if "" == config["module_exclude_pattern"]:
-            config[".upload_exclude_pattern"] = None
+            config["module_exclude_pattern"] = None
 
         """ WAIT FOR SCAN TO COMPLETE """
         config["wait_for_complete"] = "y" == input("      Wait for the scan to complete? (y/n): ")
