@@ -1,1 +1,0 @@
-# veracode-cli

@@ -1,0 +1,28 @@
+[
+  {
+    branch_match: "master",
+    description: "Release Branch - this will be scanned using Policy Scan",
+    app_id: "",
+    static: {
+      type: "policy",
+      naming: "",
+      upload: [
+        "target/verademo.war",
+        "target/another.war"
+      ],
+      modules: [
+        "verademo.war"
+      ]
+    }
+  },
+  {
+    branch_match: "feature/.*",
+    description: ""
+    app_id: "",
+  },
+  {
+    branch_match: ".*",
+    description: ""
+    app_id: "",
+  }
+]
