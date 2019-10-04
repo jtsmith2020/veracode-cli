@@ -10,13 +10,13 @@ usage:
 
 positional arguments:
 
- `SERVICE`           an integer for the accumulator
+ `SERVICE`           the Veracode Service to interact with
  
- `COMMAND`           an integer for the accumulator
+ `COMMAND`           the Command to execute on the Veracode Service
  
 optional arguments:
 
-  `-h, --help`            show this help message and exit
+  `-h, --help`            show the help message and exit
   
   `-v VID, --vid VID`     API ID for the Veracode Platform user
   
@@ -25,4 +25,14 @@ optional arguments:
   `-b BRANCH, --branch BRANCH`
                         Branch name to be used to select configuration
                         settings OR branch name pattern to be used when
-                        generating JSON skeleton code.
+                        generating JSON skeleton code
+                        
+# Veracode Services
+
+`portfolio`             access to the list of Applications, the details
+                        of a specific Application and the ability to 
+                        create a new application
+                        
+`static`                access to the Static Analysis technology 
+                        encompassing Policy Scanning, Sandbox Scanning
+                        and CI Scanning
