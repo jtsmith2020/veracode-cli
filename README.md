@@ -46,3 +46,26 @@ optional arguments:
 `ticketing`             integration with ticketing systems such as JIRA and Azure DevOps
 
 ## `portfolio` Service
+
+The `portfolio` service provides commands to list application profiles, get details of an application profile, update an application profile and create an application profile
+
+### Command List
+`list` description
+
+`details` description
+
+`update` description
+
+`create` description
+
+
+## `static` Service
+
+## `dynamic` Service
+
+## `findings` Service
+
+## `admin` Service
+
+## `ticketing` Service
+
