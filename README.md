@@ -36,3 +36,12 @@ optional arguments:
 `static`                access to the Static Analysis technology 
                         encompassing Policy Scanning, Sandbox Scanning
                         and CI Scanning
+                        
+`dynamic`               access to the Dynamic Analysis technology
+
+`findings`              access to scan results
+
+`admin`                 access to administrative functions
+
+`ticketing`             integration with ticketing systems such as JIRA and Azure DevOps
+
