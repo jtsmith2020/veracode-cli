@@ -60,8 +60,22 @@ The `portfolio` service provides commands to list application profiles, get deta
 
 
 ## `static` Service
+The `static` service provides commands to start a static analysis scan and to await the completion of a static scan
+
+### Command List
+
+`start` start a static analysis scan
+
+`await` wait for the completion of a static analysis scan
 
 ## `dynamic` Service
+The `dynamic` service provides commands to start a dynamic analysis scan and to await the completion of a dynamic analysis scan
+
+### Command List
+
+`start` start a dynamic analysis scan
+
+`await` wait for the completion of a dynamic analysis scan
 
 ## `findings` Service
 
