@@ -1,8 +1,35 @@
 # veracode-cli
 
-A Command Line Interface for interacting with Veracode Services using a local
-JSON configuration file to manage the settings that are used. For more
-information use the readme service.
+A Command Line Interface for using Veracode Services in a software development environment that uses Git for source control. 
+Configuration of the Veracode Services is managed as JSON data structures that are stored and managed with the repository and which are Branch aware.
+
+## Installation
+
+`pip install veracode-cli`
+
+## Getting Started
+
+Using the Veracode Services with `veracode-cli` involves the following steps:
+* Onboard your application
+* Configure the scan settings for the branches of your repository
+* Configure additional Veracode Services (e.g. `ticketing`)
+* Execute the Veracode Services you have configured (typically as part of your CI process)
+
+### Onboarding
+
+The `portfolio` service will help you to create a `veracode.config` file in the root of your git repository. This configuration fill will identify the Veracode Application Profile that will be used for scanning and reporting on the application. If there is an existing Application Profile you can select it or if not then you can create a new Application Profile using the `portfolio` service.
+
+Once you have created and configured the `veracode.config` file it should be committed to your repository and merged to all existing branches. This file will then enable the `veracode-cli` to be execute the Veracode Services correctly with no further configuration rergardless of the branch you are working on.
+
+* If an Application Profile already exists for this repository then the following command will create the `veracode.config` file:
+
+`veracode-cli portfolio onboard -n 'profile_name'`
+
+* If you need to create a new Application Profile then the following command will create a new Team, create the Application Profile (with default Business Criticality and Policy) and associate the new Team with the new Application Profile, and also create the `veracode.config` file:
+
+`veracode-cli portfolio onboard`
+
+## Command Line Reference
 
 usage: 
 
@@ -10,9 +37,9 @@ usage:
 
 positional arguments:
 
- `SERVICE`           the Veracode Service to interact with
+ `SERVICE`           the Veracode Service to interact with (portfolio, static, dynamic, findings, admin, ticketing)
  
- `COMMAND`           the Command to execute on the Veracode Service
+ `COMMAND`           the Command to execute on the Veracode Service (depends upon the Service)
  
 optional arguments:
 
