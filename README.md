@@ -9,7 +9,13 @@ Configuration of the Veracode Services is managed as JSON data structures that a
 
 ## Getting Started
 
-Using the Veracode Services with `veracode-cli` involves the following steps:
+The `portfolio` service will help you to create a `veracode.config` file in the root of your git repository. This configuration fill will identify the Veracode Application Profile that will be used for scanning and reporting on the application. If there is an existing Application Profile you can select it or if not then you can create a new Application Profile using the `portfolio` service.
+
+All other Veracode Services (e.g. `static`, `ticketing`, etc.) provide a `configure` command which will guide you through the necessary steps to customise the `veracode.config` file for your repository.
+
+Once you have created and configured the `veracode.config` file it should be committed to your repository and merged to all existing branches. This file will then enable the `veracode-cli` to be execute the Veracode Services correctly with no further configuration rergardless of the branch you are working on.
+
+Getting started with using the Veracode Services with `veracode-cli` involves the following steps:
 * Clone the repository you want to add Veracode Services to
 * Onboard the repository to the Veracode Platform
 * Configure the scan settings for the branches of your repository
@@ -23,10 +29,6 @@ Once these steps have been completed you can easily execute the Veracode Service
 To begin you should start in an empty directory, and clone the repository you want to onboard. For more information on how to do this see the Git documentation.
 
 ### Onboarding
-
-The `portfolio` service will help you to create a `veracode.config` file in the root of your git repository. This configuration fill will identify the Veracode Application Profile that will be used for scanning and reporting on the application. If there is an existing Application Profile you can select it or if not then you can create a new Application Profile using the `portfolio` service.
-
-Once you have created and configured the `veracode.config` file it should be committed to your repository and merged to all existing branches. This file will then enable the `veracode-cli` to be execute the Veracode Services correctly with no further configuration rergardless of the branch you are working on.
 
 Once you have cloned the repo you can use the Portfolio Service to onboard the application. The `onboard` command will create a new `veracode.config` file in the root of the repo with the basic settings required. It will also create a Veracode Application Profile (if one doesn't exist) and any necessary Teams or Users that should have access.
 
