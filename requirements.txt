@@ -1,2 +1,3 @@
 veracode-api-signing
 antfs
+gitpython

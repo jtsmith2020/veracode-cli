@@ -92,6 +92,20 @@ class VeracodeAPI:
     def upload_file(self, app_id, filename, sandbox_id=None):
         return self._upload_request(self.baseurl + "/5.0/uploadfile.do", filename, params={"app_id": app_id})
 
+    def create_team(self, name, users):
+        return self._get_request(self.baseurl + "/3.0/createteam.do", params={"team_name": name,
+                                                                                "user": users})
+
+    def create_app(self, app_name, description, bus_crit, policy, teams):
+        app_xml = self._get_request(self.baseurl + "/5.0/createapp.do", params={"app_name": app_name,
+                                                                                "business_criticality": bus_crit,
+                                                                                "policy": policy,
+                                                                                "teams": teams})
+        print(app_xml)
+        root = ET.fromstring(app_xml)
+        app_id = root.attrib.get("app_id")
+        return app_id
+
     def create_build(self, app_id, name):
         build_xml = self._get_request(self.baseurl + "/5.0/createbuild.do", params={"app_id": app_id,
                                                                                 "version": name})

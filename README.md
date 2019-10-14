@@ -21,13 +21,19 @@ The `portfolio` service will help you to create a `veracode.config` file in the 
 
 Once you have created and configured the `veracode.config` file it should be committed to your repository and merged to all existing branches. This file will then enable the `veracode-cli` to be execute the Veracode Services correctly with no further configuration rergardless of the branch you are working on.
 
+To begin you should start in an empty directory, and clone the repository you want to onboard. For more information on how to do this see the Git documentation.
+
+Once you have cloned the repo you can use the Portfolio Service to onboard the application. The `onboard` command will create a new `veracode.config` file in the root of the repo with the basic settings required. It will also create a Veracode Application Profile (if one doesn't exist) and any necessary Teams or Users that should have access.
+
 * If an Application Profile already exists for this repository then the following command will create the `veracode.config` file:
 
 `veracode-cli portfolio onboard -n 'profile_name'`
 
-* If you need to create a new Application Profile then the following command will create a new Team, create the Application Profile (with default Business Criticality and Policy) and associate the new Team with the new Application Profile, and also create the `veracode.config` file:
+* If you need to create a new Application Profile then the following command will create the `veracode.config` file:
 
 `veracode-cli portfolio onboard`
+
+
 
 ## Command Line Reference
 

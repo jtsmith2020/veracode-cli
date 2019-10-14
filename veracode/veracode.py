@@ -4,9 +4,11 @@ import json
 import services
 from services.base_service import Service
 from helpers.json_skeletons import JSONSkeleton
+from helpers.output import Out
 from importlib import import_module
 
 from helpers.api import VeracodeAPI
+
 
 readme = """
 Veracode Command Line Interface
@@ -56,12 +58,15 @@ def run():
 
         """ parse the command line """
         args = parser.parse_args()
+        """ create the outputter """
+        out = Out()
+        out.set_level(3)
         """ create the Veracode API instance """
         api = VeracodeAPI(None, args.vid, args.vkey)
 
         if args.service == 'readme':
             """ show the readme file information """
-            print(readme)
+            Out.print(readme)
         elif args.service == 'skeleton':
             """ add a skeleton block """
             """ load the config file """
@@ -86,7 +91,7 @@ def run():
                 config.append(branch)
                 with open('veracode.config', 'w') as outfile:
                     json.dump(config, outfile, indent=2)
-            print(json.dumps(config, indent=2))
+            out.print(json.dumps(config, indent=2))
         else:
 
             """ load the config file """
@@ -101,7 +106,7 @@ def run():
             service = my_import('services.'+args.service+'.'+args.service)
             instance = service()
             """ execute """
-            print(instance.execute(args, config, api))
+            out.print(instance.execute(args, config, api, out))
 
 
 
