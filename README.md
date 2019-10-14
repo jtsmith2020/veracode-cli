@@ -33,6 +33,7 @@ Once you have cloned the repo you can use the Portfolio Service to onboard the a
 
 `veracode-cli portfolio onboard`
 
+The `onboard` command will inspect the Git repository and prompt you to make configuration decisions which will dictate the structure of the `veracode.config` file. For example, the list of current Branches in the repo will be shown and you will be prompted to define the naming convention used and some Regular Expressions which can be used to match with Branches of different types (often 'master' and 'feature' branches will require different scanning configurations).
 
 
 ## Command Line Reference
