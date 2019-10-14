@@ -10,18 +10,23 @@ Configuration of the Veracode Services is managed as JSON data structures that a
 ## Getting Started
 
 Using the Veracode Services with `veracode-cli` involves the following steps:
-* Onboard your application
+* Clone the repository you want to add Veracode Services to
+* Onboard the repository to the Veracode Platform
 * Configure the scan settings for the branches of your repository
 * Configure additional Veracode Services (e.g. `ticketing`)
-* Execute the Veracode Services you have configured (typically as part of your CI process)
+* Commit the Veracode configuration to your repository
+
+Once these steps have been completed you can easily execute the Veracode Services you have configured (typically as part of your CI process) using the `veracode-cli` commands.
+
+### Cloning the repository
+
+To begin you should start in an empty directory, and clone the repository you want to onboard. For more information on how to do this see the Git documentation.
 
 ### Onboarding
 
 The `portfolio` service will help you to create a `veracode.config` file in the root of your git repository. This configuration fill will identify the Veracode Application Profile that will be used for scanning and reporting on the application. If there is an existing Application Profile you can select it or if not then you can create a new Application Profile using the `portfolio` service.
 
 Once you have created and configured the `veracode.config` file it should be committed to your repository and merged to all existing branches. This file will then enable the `veracode-cli` to be execute the Veracode Services correctly with no further configuration rergardless of the branch you are working on.
-
-To begin you should start in an empty directory, and clone the repository you want to onboard. For more information on how to do this see the Git documentation.
 
 Once you have cloned the repo you can use the Portfolio Service to onboard the application. The `onboard` command will create a new `veracode.config` file in the root of the repo with the basic settings required. It will also create a Veracode Application Profile (if one doesn't exist) and any necessary Teams or Users that should have access.
 
@@ -34,6 +39,44 @@ Once you have cloned the repo you can use the Portfolio Service to onboard the a
 `veracode-cli portfolio onboard`
 
 The `onboard` command will inspect the Git repository and prompt you to make configuration decisions which will dictate the structure of the `veracode.config` file. For example, the list of current Branches in the repo will be shown and you will be prompted to define the naming convention used and some Regular Expressions which can be used to match with Branches of different types (often 'master' and 'feature' branches will require different scanning configurations).
+
+### Configure Scanning
+
+The `static` service will enable you to add Static Scanning (Policy, Sandbox or other...) configuration to your Branches. For example, a common configuration would be to use Static Policy Scans for your master branch and to use Sandbox Scans in all of your feature branches.
+
+The `configure` command will add static scan configuration to the different types of branch that were defined using the `onboard` command of the Portfolio Service. For each type of branch you will be prompted for the configuration decisions required to enable Static Scanning.
+
+* The following command will start the interactive scan configuration process:
+
+`veracode-cli static configure`
+
+### Configuring additional Veracode Services
+
+TBD
+
+### Commit the `veracode.config` file to the repository
+
+For more information on how to do this see the Git documentation.
+
+### Executing Veracode Services
+
+With the `veracode.config` file added to the repository the Veracode Services can be executed with simple commands using the `veracode-cli`. Some examples:
+
+* Start a static scan for the current branch:
+
+`veracode-cli static start`
+
+* Wait for the latest scan of the current branch to complete:
+
+`veracode-cli static await`
+
+* Download the latest scan results for the current branch:
+
+`veracode-cli findings download`
+
+* Synchronise the latest scan results for the current branch with a Ticketing System (e.g. JIRA)
+
+`veracode-cli ticketing synchronise`
 
 
 ## Command Line Reference
