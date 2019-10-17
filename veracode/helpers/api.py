@@ -101,7 +101,7 @@ class VeracodeAPI:
                                                                                 "business_criticality": bus_crit,
                                                                                 "policy": policy,
                                                                                 "teams": teams})
-        print(app_xml)
+        #print(app_xml)
         root = ET.fromstring(app_xml)
         app_id = root.attrib.get("app_id")
         return app_id

@@ -16,5 +16,5 @@ class Service(ABC):
         pass
 
     @abstractmethod
-    def execute(self, args, config, api, out):
+    def execute(self, args, config, api):
         pass

@@ -4,9 +4,13 @@ from antfs import AntPatternDirectoryScanner
 from services.base_service import Service
 from helpers.api import VeracodeAPI
 import json
+import logging
+import re
 
 from helpers.exceptions import VeracodeError
-
+from helpers.input import choice
+from helpers.input import free_text
+from helpers.input import patterns_list
 
 class static(Service):
     def __init__(self):
@@ -23,14 +27,15 @@ class static(Service):
         """ await """
         await_parser = command_parsers.add_parser('await', help='wait for a static scan to complete')
         """ skeleton """
-        skeleton_parser = command_parsers.add_parser('skeleton', help='add a skeleton config block to the veracode.config file')
+        configure_parser = command_parsers.add_parser('configure', help='configure the static config blocks in the veracode.config file')
         """ optional parameters """
         static_parser.add_argument("-n", "--name", type=str, help="the name of the scan")
         static_parser.add_argument("-s", "--sandbox", type=str, help="the name of the sandbox to use (if scan type is sandbox)")
 
     def execute(self, args, config, api):
-        if args.command == "skeleton":
-            return self.skeleton(args, config, api)
+        logging.debug("static service executed")
+        if args.command == "configure":
+            return self.configure(args, config, api)
         elif args.command == "start":
             return self.start(args, config, api)
         elif args.command == "await":
@@ -38,92 +43,85 @@ class static(Service):
         else:
             print("unknown command: "+ args.command)
 
-    def skeleton(self, args, config, api):
-        match_pattern = args.branch
-        if match_pattern is None:
-            match_pattern = ".*"
-        create = True
-        for segment in config:
-            if segment["match_pattern"] == match_pattern:
-                branch = segment
-                create = False
-        if create:
-            branch = dict()
-            branch["match_pattern"] = match_pattern
-            config.append(branch)
-        """ add the skeleton config elements """
-        skeleton = dict()
-        skeleton["scan_type"] = "required: policy|sandbox|devops"
-        skeleton["app_id"] = "required for policy or sandbox scan type: <app_id>"
-        skeleton["sandbox_naming"] = "required for sandbox scan type: timestamp|env|param|branch"
-        skeleton["scan_naming"] = "required for policy or sandbox scan types: timestamp|env|param"
-        skeleton["scan_naming_env"] = "required if scan_naming is env: the name of the environment variable to use"
-        skeleton["upload_include_patterns"] = []
-        skeleton["upload_include_patterns"].append(
-            "one or more ant-style patterns to match files that should be uploaded")
-        skeleton["upload_exclude_patterns"] = []
-        skeleton["upload_exclude_patterns"].append(
-            "zero or more ant-style patterns to match files that should be excluded from uploading")
-        branch["static"] = skeleton
+    def configure(self, args, config, api):
+        logging.debug("configure called")
+        """ for each branch type... """
+        for branch_type in config:
+            print("")
+            print("Configure the Static Service for branches which match \"" + branch_type["branch_pattern"] + "\"")
+
+            branch_type["static_config"]["scan_type"] = choice("Type of scan", branch_type["static_config"]["scan_type"], ["policy", "sandbox"])
+            if branch_type["static_config"]["scan_type"] == "sandbox":
+                branch_type["static_config"]["sandbox_naming"] = choice("Sandbox Naming Convention", branch_type["static_config"]["sandbox_naming"], ["timestamp", "env", "param", "branch"])
+                if branch_type["static_config"]["sandbox_naming"] == "env":
+                    branch_type["static_config"]["sandbox_naming_env"] = free_text("Environment Variable to use for Sandbox Name", branch_type["static_config"]["sandbox_naming_env"])
+            branch_type["static_config"]["scan_naming"] = choice("Scan Naming Convention", branch_type["static_config"]["scan_naming"], ["timestamp", "env", "param", "git"])
+            if branch_type["static_config"]["scan_naming"] == "env":
+                branch_type["static_config"]["scan_naming_env"] = free_text("Environment Variable to use for Scan Name", branch_type["static_config"]["scan_naming_env"])
+            branch_type["static_config"]["upload_include_patterns"] = patterns_list("Upload Include Patterns", branch_type["static_config"]["upload_include_patterns"])
+            branch_type["static_config"]["upload_exclude_patterns"] = patterns_list("Upload Exclude Patterns", branch_type["static_config"]["upload_exclude_patterns"])
+
         """ write the config file """
         with open('veracode.config', 'w') as outfile:
             json.dump(config, outfile, indent=2)
         return json.dumps(config, indent=2)
 
     def start(self, args, config, api):
-        match_pattern = args.branch
-        if match_pattern is None:
-            match_pattern = ".*"
-        """ generate the scan name """
-        scan_name = ""
-        if config.scan_naming == "timestamp":
-            scan_name = datetime.utcnow().strftime("[%Y-%m-%d %H:%M:%S UTC]")
-        elif config["scan_naming"] == "env":
-            scan_name = os.environ.get(config["scan_name_env"])
-        elif config["scan_naming"] == "param":
-            scan_name = args.name
+        for branch_type in config:
+            if re.match("^"+branch_type["branch_pattern"]+"$", args.branch):
+                """ This is the config to use... """
+                """ generate the scan name """
+                scan_name = ""
+                if branch_type["static_config"]["scan_naming"] == "timestamp":
+                    scan_name = datetime.utcnow().strftime("[%Y-%m-%d %H:%M:%S UTC]")
+                elif branch_type["static_config"]["scan_naming"] == "env":
+                    scan_name = os.environ.get(config["scan_name_env"])
+                elif branch_type["static_config"]["scan_naming"] == "param":
+                    scan_name = args.name
+                elif branch_type["static_config"]["scan_naming"] == "git":
+                    """ need to generate a GIT scan name"""
+                else:
+                    """ no valid scan name """
+                    logging.error("No Valid Scan Name")
 
-        if "" == scan_name:
-            print("Invalid scan name: must not be empty")
-            raise VeracodeError("Invalid Scan Name")
+                print("Creating new Scan with name: " + scan_name)
+                build_id = api.create_build(config["portfolio"]["app_id"], scan_name)
+                if build_id is None:
+                    raise VeracodeError("Cannot Create New Build")
+                print("  (scan id = " + build_id + ")")
 
-        print("Creating new Scan with name: " + scan_name)
-        build_id = api.create_build(config["portfolio"]["app_id"], scan_name)
-        if build_id is None:
-            raise VeracodeError("Cannot Create New Build")
-        print("  (scan id = " + build_id + ")")
+                """ Upload the files """
+                print("Uploading Files")
+                ds = AntPatternDirectoryScanner(".", config["upload_include_pattern"], config["upload_exclude_pattern"])
+                for filename in ds.scan():
+                    print(" " + filename)
+                    api.upload_file(config["portfolio"]["app_id"], filename)
 
-        """ Upload the files """
-        print("Uploading Files")
-        ds = AntPatternDirectoryScanner(".", config["upload_include_pattern"], config["upload_exclude_pattern"])
-        for filename in ds.scan():
-            print(" " + filename)
-            api.upload_file(activity["app_id"], filename)
+                start_time = datetime.now()
+                """ Should we enable Auto-Scan ? """
+                if config["module_include_pattern"] is None:
+                    """ Yes - enable AutoScan and lets get going """
+                    print("Pre-Scan Starting. Auto-Scan is enabled - Full Scan will start automatically.")
+                    api.begin_prescan(activity["app_id"], "true")
+                    return "WHAT SHOULD WE OUTPUT HERE 1"
+                else:
+                    """ No - disable auto-scan and get started  """
+                    api.begin_prescan(activity["app_id"], "false")
+                    """ Now we wait for prescan to complete - check every 30 seconds """
+                    modules = api.get_modules(activity["app_id"], build_id=activity["build_id"])
+                    while modules is None:
+                        print("Waiting for Pre-Scan to complete...")
+                        time.sleep(30)
+                        modules = api.get_modules(activity["app_id"], build_id=activity["build_id"])
+                    print("Pre-Scan Complete")
+                    print("Full Scan Starting")
+                    if config["module_include_pattern"] is not None:
+                        """ now we need to select the modules and start the scan... """
+                        print("module selection code not writen")
 
-        start_time = datetime.now()
-        """ Should we enable Auto-Scan ? """
-        if config["module_include_pattern"] is None:
-            """ Yes - enable AutoScan and lets get going """
-            print("Pre-Scan Starting. Auto-Scan is enabled - Full Scan will start automatically.")
-            api.begin_prescan(activity["app_id"], "true")
-        else:
-            """ No - disable auto-scan and get started  """
-            api.begin_prescan(activity["app_id"], "false")
-            """ Now we wait for prescan to complete - check every 30 seconds """
-            modules = api.get_modules(activity["app_id"], build_id=activity["build_id"])
-            while modules is None:
-                print("Waiting for Pre-Scan to complete...")
-                time.sleep(30)
-                modules = api.get_modules(activity["app_id"], build_id=activity["build_id"])
-            print("Pre-Scan Complete")
-            print("Full Scan Starting")
-            if config["module_include_pattern"] is not None:
-                """ now we need to select the modules and start the scan... """
-                print("module selection code not writen")
+                        """ XXXX NOT DONE YET XXXX  """
 
-                """ XXXX NOT DONE YET XXXX  """
-
-            print("Full Scan Running")
+                    print("Full Scan Running")
 
     def wait(self, args, config, api):
         match_pattern = args.branch

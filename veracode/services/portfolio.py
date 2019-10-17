@@ -1,6 +1,9 @@
 from .base_service import Service
 from git import Repo
 import os
+import logging
+import json
+
 
 class portfolio(Service):
     def __init__(self):
@@ -26,34 +29,135 @@ class portfolio(Service):
 
 
 
-    def execute(self, args, config, api, out):
+    def execute(self, args, config, api):
         if args.command == 'onboard':
             """ onboard a new application """
             """ first we need to get the current repo"""
-            out.log(2, "getting the current repo based on the current directory")
+            logging.debug(2, "getting the current repo based on the current directory")
             repo = Repo(os.path.curdir)
             if not repo.bare:
-                out.log(2, "the repo is not bare. get the name of the app")
+                logging.debug(2, "the repo is not bare. get the name of the app")
                 app_name = ""
                 """ was a name supplied as a parameter? """
                 if args.name is not None:
                     app_name = args.name
                 else:
                     """ find the name from the url of the remote 'origin' """
-                    out.log(2, "finding the name from the url of the remote 'origin'")
+                    logging.debug(2, "finding the name from the url of the remote 'origin'")
                     app_name = repo.remote('origin').url.rsplit('/', 1)[-1]
-                out.log(1, "the name of the app is " + app_name)
+                logging.debug(1, "the name of the app is " + app_name)
                 """ create a team for this app """
+                print("Creating Team for this Application : " + app_name)
                 resp = api.create_team(app_name, "")
-                out.log(2, "response from create_team:")
-                out.log(2, str(resp))
+                logging.debug(2, "response from create_team:")
+                logging.debug(2, str(resp))
                 """ create the app """
-                resp = api.create_app(app_name, "created by veracode-cli", "High", "", app_name)
-                out.log(2, "response from create_app:")
-                out.log(2, str(resp))
-                """ now we need to know who the users are... """
+                print("Creating Application Profile : " + app_name)
+                app_id = api.create_app(app_name, "created by veracode-cli", "High", "", app_name)
+                #app_id = "12345"
+                logging.debug(2, "response from create_app:")
+                logging.debug(2, str(app_id))
 
+                """ sort out the branching strategy """
+                print("  ")
+                print("Choose your branch scanning strategy:")
+                print("  ")
+                print("  1. Policy Scan on specific branch (typically 'master')")
+                print("     Sandbox Scan for other branches")
+                print("  ")
+                print("  2. Sandbox Scan for all branches")
+                print("     Promote Sandbox to Policy Scan manually")
+                print("  ")
+                print("  3. Custom (only a skeleton veracode.config file will be created")
+                print("  ")
+                bss = int(0)
+                while not (1 <= bss <= 3):
+                    bss = int(input("    Choose (1-3): "))
 
+                if bss == 1:
+                    """ select branch for Policy Scan """
+                    print("Choose the branch for Policy Scanning:")
+                    print("")
+                    repo_heads = repo.heads
+                    i=0
+                    for head in repo_heads:
+                        i = i+1
+                        print(" %3d %s" %(i, head.name))
+                    print("")
+                    bss = int(0)
+                    while not (1 <= bss <= i):
+                        bss = int(input("    Choose (1-"+str(i)+"): "))
+
+                    """ create the config """
+                    config = []
+                    """ add the master skeleton config elements """
+                    master_skeleton = dict()
+                    master_skeleton["branch_pattern"] = repo_heads[i-1].name
+                    master_static_skeleton = dict()
+                    master_static_skeleton["scan_type"] = "policy"
+                    master_static_skeleton["scan_naming"] = "git"
+                    master_static_skeleton["upload_include_patterns"] = []
+                    master_static_skeleton["upload_include_patterns"].append("**/**.war")
+                    master_static_skeleton["upload_exclude_patterns"] = []
+                    master_skeleton["config_name"] = "Policy Scanning on master"
+                    master_skeleton["static_config"] = master_static_skeleton
+                    master_skeleton["portfolio"] = dict()
+                    master_skeleton["portfolio"]["app_id"] = app_id
+                    master_skeleton["portfolio"]["app_name"] = app_name
+                    config.append(master_skeleton)
+                    """ add the other branch config elements"""
+                    other_skeleton = dict()
+                    other_skeleton["branch_pattern"] = ".*"
+                    other_static_skeleton = dict()
+                    other_static_skeleton["scan_type"] = "sandbox"
+                    other_static_skeleton["sandbox_naming"] = "branch"
+                    other_static_skeleton["scan_naming"] = "git"
+                    other_static_skeleton["upload_include_patterns"] = []
+                    other_static_skeleton["upload_include_patterns"].append("**/**.war")
+                    other_static_skeleton["upload_exclude_patterns"] = []
+                    other_skeleton["config_name"] = "Sandbox Scanning on branch"
+                    other_skeleton["static_config"] = other_static_skeleton
+                    other_skeleton["portfolio"] = dict()
+                    other_skeleton["portfolio"]["app_id"] = app_id
+                    other_skeleton["portfolio"]["app_name"] = app_name
+                    config.append(other_skeleton)
+                    """ write the config file """
+                    print("")
+                    print("Creating veracode.config file:")
+                    print("")
+                    with open('veracode.config', 'w') as outfile:
+                        json.dump(config, outfile, indent=2)
+                    return json.dumps(config, indent=2)
+                elif bss == 2:
+                    """ create the config """
+                    config = []
+                    """ add the other branch config elements"""
+                    other_skeleton = dict()
+                    other_skeleton["match_pattern"] = ".*"
+                    other_static_skeleton = dict()
+                    other_static_skeleton["scan_type"] = "sandbox"
+                    other_static_skeleton["sandbox_naming"] = "branch"
+                    other_static_skeleton["scan_naming"] = "git"
+                    other_static_skeleton["upload_include_patterns"] = []
+                    other_static_skeleton["upload_include_patterns"].append("**/**")
+                    other_static_skeleton["upload_exclude_patterns"] = []
+                    master_skeleton["config_name"] = "Sandbox Scanning on branches"
+                    other_skeleton["static"] = other_static_skeleton
+                    other_skeleton["portfolio"] = dict()
+                    other_skeleton["portfolio"]["app_id"] = app_id
+                    other_skeleton["portfolio"]["app_name"] = app_name
+                    config.append(other_skeleton)
+                    """ write the config file """
+                    with open('veracode.config', 'w') as outfile:
+                        json.dump(config, outfile, indent=2)
+                    return json.dumps(config, indent=2)
+                elif bss == 3:
+                    """ create the config """
+                    config = []
+                    """ write the config file """
+                    with open('veracode.config', 'w') as outfile:
+                        json.dump(config, outfile, indent=2)
+                    return json.dumps(config, indent=2)
             else:
                 print('Repo not loaded.')
 
