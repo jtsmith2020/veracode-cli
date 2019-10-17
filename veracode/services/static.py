@@ -99,31 +99,10 @@ class static(Service):
                     print(" " + filename)
                     api.upload_file(branch_type["portfolio"]["app_id"], filename)
 
-                start_time = datetime.datetime.now()
-                """ Should we enable Auto-Scan ? """
-                if branch_type["static_config"]["module_include_pattern"] is None:
-                    """ Yes - enable AutoScan and lets get going """
-                    print("Pre-Scan Starting. Auto-Scan is enabled - Full Scan will start automatically.")
-                    api.begin_prescan(["app_id"], "true")
-                    return "WHAT SHOULD WE OUTPUT HERE 1"
-                else:
-                    """ No - disable auto-scan and get started  """
-                    api.begin_prescan(branch_type["portfolio"]["app_id"], "false")
-                    """ Now we wait for prescan to complete - check every 30 seconds """
-                    modules = api.get_modules(branch_type["portfolio"]["app_id"], build_id=build_id)
-                    while modules is None:
-                        print("Waiting for Pre-Scan to complete...")
-                        time.sleep(30)
-                        modules = api.get_modules(branch_type["portfolio"]["app_id"], build_id=build_id)
-                    print("Pre-Scan Complete")
-                    print("Full Scan Starting")
-                    if branch_type["module_include_pattern"] is not None:
-                        """ now we need to select the modules and start the scan... """
-                        print("module selection code not writen")
-
-                        """ XXXX NOT DONE YET XXXX  """
-
-                    print("Full Scan Running")
+                """ enable AutoScan and lets get going """
+                print("Pre-Scan Starting. Auto-Scan is enabled - Full Scan will start automatically.")
+                api.begin_prescan(branch_type["portfolio"]["app_id"], "true")
+                return "Scan Started with Auto-Scan Enabled"
 
     def wait(self, args, config, api):
         match_pattern = args.branch
