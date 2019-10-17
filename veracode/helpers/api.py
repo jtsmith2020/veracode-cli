@@ -12,7 +12,7 @@ import os
 import requests
 import logging
 from requests.adapters import HTTPAdapter
-
+import re
 from veracode_api_signing.plugin_requests import RequestsAuthPluginVeracodeHMAC
 from helpers.exceptions import VeracodeAPIError
 from helpers.exceptions import VeracodeError
@@ -101,11 +101,9 @@ class VeracodeAPI:
                                                                                 "business_criticality": bus_crit,
                                                                                 "policy": policy,
                                                                                 "teams": teams})
-        print(app_xml)
-        root = ET.fromstring(app_xml)
-        app_id = root.attrib.get("app_id")
-        print(app_id)
-        return app_id
+        app_id = re.findall('app_id="(.*?)"', str(app_xml))
+        # print(app_id)
+        return app_id[0]
 
     def create_build(self, app_id, name):
         build_xml = self._get_request(self.baseurl + "/5.0/createbuild.do", params={"app_id": app_id,
