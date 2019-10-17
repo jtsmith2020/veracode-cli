@@ -1,7 +1,7 @@
 # veracode-cli
 
 A Command Line Interface for using Veracode Services in a software development environment that uses Git for source control. 
-Configuration of the Veracode Services is managed as JSON data structures that are stored and managed with the repository and which are Branch aware.
+Configuration of the Veracode Services is managed via JSON data structures that are stored and managed with the repository and which are Branch aware.
 
 ## Installation
 
@@ -44,9 +44,9 @@ The `onboard` command will inspect the Git repository and prompt you to make con
 
 ### Configure Scanning
 
-The `static` service will enable you to add Static Scanning (Policy, Sandbox or other...) configuration to your Branches. For example, a common configuration would be to use Static Policy Scans for your master branch and to use Sandbox Scans in all of your feature branches.
+The `static` service will enable you configure Static Scanning (Policy, Sandbox or other...) for your Branches. For example, a common configuration would be to use Static Policy Scans for your master branch and to use Sandbox Scans in all of your feature branches.
 
-The `configure` command will add static scan configuration to the different types of branch that were defined using the `onboard` command of the Portfolio Service. For each type of branch you will be prompted for the configuration decisions required to enable Static Scanning.
+The `configure` command will help you to edit or add static scan configurations for the different types of branch that were defined using the `onboard` command of the Portfolio Service. For each type of branch you will be prompted for the configuration decisions required to enable Static Scanning.
 
 * The following command will start the interactive scan configuration process:
 

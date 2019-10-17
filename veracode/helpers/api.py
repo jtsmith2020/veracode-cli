@@ -101,9 +101,10 @@ class VeracodeAPI:
                                                                                 "business_criticality": bus_crit,
                                                                                 "policy": policy,
                                                                                 "teams": teams})
-        #print(app_xml)
+        print(app_xml)
         root = ET.fromstring(app_xml)
         app_id = root.attrib.get("app_id")
+        print(app_id)
         return app_id
 
     def create_build(self, app_id, name):

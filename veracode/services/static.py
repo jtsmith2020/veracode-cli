@@ -1,4 +1,5 @@
 import datetime
+import time
 import os
 from antfs import AntPatternDirectoryScanner
 from services.base_service import Service
@@ -68,54 +69,55 @@ class static(Service):
 
     def start(self, args, config, api):
         for branch_type in config:
-            if re.match("^"+branch_type["branch_pattern"]+"$", args.branch):
+            if re.match("^"+branch_type["branch_pattern"]+"$", str(args.branch)):
                 """ This is the config to use... """
                 """ generate the scan name """
                 scan_name = ""
                 if branch_type["static_config"]["scan_naming"] == "timestamp":
-                    scan_name = datetime.utcnow().strftime("[%Y-%m-%d %H:%M:%S UTC]")
+                    scan_name = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S UTC]")
                 elif branch_type["static_config"]["scan_naming"] == "env":
                     scan_name = os.environ.get(config["scan_name_env"])
                 elif branch_type["static_config"]["scan_naming"] == "param":
                     scan_name = args.name
                 elif branch_type["static_config"]["scan_naming"] == "git":
                     """ need to generate a GIT scan name"""
+                    scan_name = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S UTC]")
                 else:
                     """ no valid scan name """
                     logging.error("No Valid Scan Name")
 
                 print("Creating new Scan with name: " + scan_name)
-                build_id = api.create_build(config["portfolio"]["app_id"], scan_name)
+                build_id = api.create_build(branch_type["portfolio"]["app_id"], scan_name)
                 if build_id is None:
                     raise VeracodeError("Cannot Create New Build")
                 print("  (scan id = " + build_id + ")")
 
                 """ Upload the files """
                 print("Uploading Files")
-                ds = AntPatternDirectoryScanner(".", config["upload_include_pattern"], config["upload_exclude_pattern"])
+                ds = AntPatternDirectoryScanner(".", branch_type["static_config"]["upload_include_patterns"], branch_type["static_config"]["upload_exclude_patterns"])
                 for filename in ds.scan():
                     print(" " + filename)
-                    api.upload_file(config["portfolio"]["app_id"], filename)
+                    api.upload_file(branch_type["portfolio"]["app_id"], filename)
 
-                start_time = datetime.now()
+                start_time = datetime.datetime.now()
                 """ Should we enable Auto-Scan ? """
-                if config["module_include_pattern"] is None:
+                if branch_type["static_config"]["module_include_pattern"] is None:
                     """ Yes - enable AutoScan and lets get going """
                     print("Pre-Scan Starting. Auto-Scan is enabled - Full Scan will start automatically.")
-                    api.begin_prescan(activity["app_id"], "true")
+                    api.begin_prescan(["app_id"], "true")
                     return "WHAT SHOULD WE OUTPUT HERE 1"
                 else:
                     """ No - disable auto-scan and get started  """
-                    api.begin_prescan(activity["app_id"], "false")
+                    api.begin_prescan(branch_type["portfolio"]["app_id"], "false")
                     """ Now we wait for prescan to complete - check every 30 seconds """
-                    modules = api.get_modules(activity["app_id"], build_id=activity["build_id"])
+                    modules = api.get_modules(branch_type["portfolio"]["app_id"], build_id=build_id)
                     while modules is None:
                         print("Waiting for Pre-Scan to complete...")
                         time.sleep(30)
-                        modules = api.get_modules(activity["app_id"], build_id=activity["build_id"])
+                        modules = api.get_modules(branch_type["portfolio"]["app_id"], build_id=build_id)
                     print("Pre-Scan Complete")
                     print("Full Scan Starting")
-                    if config["module_include_pattern"] is not None:
+                    if branch_type["module_include_pattern"] is not None:
                         """ now we need to select the modules and start the scan... """
                         print("module selection code not writen")
 
