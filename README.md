@@ -69,7 +69,7 @@ The `configure` command will help you to edit or add static scan configurations 
 
 `veracode-cli static configure`
 
-### Configuring additional Veracode Services
+### Configuring additional Services
 
 TBD
 
@@ -77,7 +77,7 @@ TBD
 
 For more information on how to do this see the Git documentation.
 
-### Executing Veracode Services
+### Executing Services
 
 With the `veracode.config` file added to the repository the Veracode Services can be executed with simple commands using the `veracode-cli`. Some examples:
 
