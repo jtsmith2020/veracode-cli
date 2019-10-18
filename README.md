@@ -18,11 +18,11 @@ Each service (except `portfolio`) also provides a `configure` command which prov
 
 The `veracode.config` file is in JSON format and it's root object is a list. Each element in the list is a dictionary of configuration settings for all of the Veracode Services along with a `match_pattern` value. The `match_pattern` is a regular expression and when the `veracode-cli` is executed it will use the current branch name (either passed as an argument or retrieved from the current Git branch) to match against the `match_pattern` values of each dictionary and the first one which matches will be used as the configuration for the Veracode Service and Command that are executed.
 
-## Installation
+# Installation
 
 `pip install veracode-cli`
 
-## Getting Started
+# Getting Started
 
 The `portfolio` service will help you to create a `veracode.config` file in the root of your git repository. This configuration fill will identify the Veracode Application Profile that will be used for scanning and reporting on the application. If there is an existing Application Profile you can select it or if not then you can create a new Application Profile using the `portfolio` service.
 
