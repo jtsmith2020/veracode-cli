@@ -1,7 +1,7 @@
 # veracode-cli
 
-A Command Line Interface for using Veracode Services in a software development environment that uses Git for source control. 
-Configuration of the Veracode Services is managed via JSON data structures that are stored and managed with the repository and which are Branch aware.
+A Command Line Interface for using __Veracode Services__ in a software development environment that uses Git for source control. 
+Configuration of the Veracode Services is managed via JSON data structures that are stored and managed with the repository and which are __Branch Aware__.
 
 ### Veracode Services
 
