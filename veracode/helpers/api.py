@@ -90,7 +90,11 @@ class VeracodeAPI:
             raise VeracodeAPIError(e)
 
     def upload_file(self, app_id, filename, sandbox_id=None):
-        return self._upload_request(self.baseurl + "/5.0/uploadfile.do", filename, params={"app_id": app_id})
+        if sandbox_id is None:
+            return self._upload_request(self.baseurl + "/5.0/uploadfile.do", filename, params={"app_id": app_id})
+        else:
+            return self._upload_request(self.baseurl + "/5.0/uploadfile.do", filename, params={"app_id": app_id,
+                                                                                               "sandbox_id": sandbox_id})
 
     def create_team(self, name, users):
         return self._get_request(self.baseurl + "/3.0/createteam.do", params={"team_name": name,
@@ -105,16 +109,46 @@ class VeracodeAPI:
         # print(app_id)
         return app_id[0]
 
-    def create_build(self, app_id, name):
-        build_xml = self._get_request(self.baseurl + "/5.0/createbuild.do", params={"app_id": app_id,
-                                                                                "version": name})
-        root = ET.fromstring(build_xml)
-        build_id = root.attrib.get("build_id")
-        return build_id
+    def get_sandbox_id(self, app_id, sandbox_name):
+        sbl_xml = self._get_request(self.baseurl + "/5.0/getsandboxlist.do", params={"app_id": app_id})
+        sb_id = re.findall('sandbox_id="(.*?)" sandbox_name="' + sandbox_name + '"', str(sbl_xml))
+        if len(sb_id) == 1:
+            return sb_id[0]
+        else:
+            return None
+
+    def create_sandbox(self, app_id, sandbox_name):
+        sb_xml = self._get_request(self.baseurl + "/5.0/createsandbox.do", params={"app_id": app_id,
+                                                                                    "sandbox_name": sandbox_name})
+        sb_id = re.findall('sandbox_id="(.*?)"', str(sb_xml))
+        if len(sb_id) == 1:
+            return sb_id[0]
+        else:
+            return None
+
+    def create_build(self, app_id, name, sandbox_id):
+        if sandbox_id is None:
+            build_xml = self._get_request(self.baseurl + "/5.0/createbuild.do", params={"app_id": app_id,
+                                                                                        "version": name})
+        else:
+            build_xml = self._get_request(self.baseurl + "/5.0/createbuild.do", params={"app_id": app_id,
+                                                                                        "version": name,
+                                                                                        "sandbox_id": sandbox_id})
+        build_id = re.findall('build_id="(.*?)"', str(build_xml))
+        # print(build_xml)
+        if len(build_id) > 0:
+            return build_id[0]
+        else:
+            return None
 
     def begin_prescan(self, app_id, auto_scan, sandbox_id=None):
-        return self._get_request(self.baseurl + "/5.0/beginprescan.do", params={"app_id": app_id,
-                                                                                "auto_scan": auto_scan})
+        if sandbox_id is None:
+            return self._get_request(self.baseurl + "/5.0/beginprescan.do", params={"app_id": app_id,
+                                                                                    "auto_scan": auto_scan})
+        else:
+            return self._get_request(self.baseurl + "/5.0/beginprescan.do", params={"app_id": app_id,
+                                                                                    "auto_scan": auto_scan,
+                                                                                    "sandbox_id": sandbox_id})
 
     def get_modules(self, app_id, build_id=None, sandbox_id=None):
         parameters = {"app_id": app_id}
