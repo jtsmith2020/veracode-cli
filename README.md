@@ -1,9 +1,9 @@
 # veracode-cli
 
-A Command Line Interface for using __Veracode Services__ in a software development environment that uses Git for source control. 
-Configuration of the Veracode Services is managed via JSON data structures that are stored and managed with the repository and which are __Branch Aware__.
+A Command Line Interface for using __Services__ in a software development environment that uses Git for source control. 
+Configuration of the Services is managed via JSON data structures that are stored and managed with the repository in a `veracode.config` file and which are __Branch Aware__.
 
-### Veracode Services
+### Services
 
 The commands available in `veracode-cli` are grouped into Services:
 
@@ -12,9 +12,11 @@ The commands available in `veracode-cli` are grouped into Services:
 * `results` service provides commands to retrieve Scan results and make decisions based upon them
 * `ticketing` service provides commands to synchronise Scan results with a ticketing system (e.g. JIRA) 
 
+Each Service (except `portfolio`) also provides a `configure` command which provides an interactive configuration interface that will assist in correctly creating the `veracode.config` file.
+
 ### Branch Aware?
 
-The `veracode.config` file is in JSON format and it's root object is a list. Each element in the list is a dictionary of configuration settings for all of the Veracode Services along with a `match_pattern` value. The `match_pattern` is a regular expression and when the `veracode-cli` is executed it will use the current branch name (either passed as an argument or retrieved from the current Git branch) to match against the `match_pattern` values of each dictionary and the first one which matches will be used as the configuration for the Service and Command that are executed.
+The `veracode.config` file is in JSON format and it's root object is a list. Each element in the list is a dictionary of configuration settings for all of the Services along with a `match_pattern` value. The `match_pattern` is a regular expression and when the `veracode-cli` is executed it will use the current branch name (either passed as an argument or retrieved from the current Git branch) to match against the `match_pattern` values of each dictionary and the first one which matches will be used as the configuration for the Service and Command that are executed.
 
  
 
@@ -26,7 +28,7 @@ The `veracode.config` file is in JSON format and it's root object is a list. Eac
 
 The `portfolio` service will help you to create a `veracode.config` file in the root of your git repository. This configuration fill will identify the Veracode Application Profile that will be used for scanning and reporting on the application. If there is an existing Application Profile you can select it or if not then you can create a new Application Profile using the `portfolio` service.
 
-All other Veracode Services (e.g. `static`, `ticketing`, etc.) provide a `configure` command which will guide you through the necessary steps to customise the `veracode.config` file for your repository.
+All other Veracode (e.g. `static`, `ticketing`, etc.) provide a `configure` command which will guide you through the necessary steps to customise the `veracode.config` file for your repository.
 
 Once you have created and configured the `veracode.config` file it should be committed to your repository and merged to all existing branches. This file will then enable the `veracode-cli` to be execute the Veracode Services correctly with no further configuration rergardless of the branch you are working on.
 
