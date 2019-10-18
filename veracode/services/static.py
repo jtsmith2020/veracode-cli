@@ -27,7 +27,7 @@ class static(Service):
         start_parser = command_parsers.add_parser('start', help='start a static scan')
         """ await """
         await_parser = command_parsers.add_parser('await', help='wait for a static scan to complete')
-        """ skeleton """
+        """ configure """
         configure_parser = command_parsers.add_parser('configure', help='configure the static config blocks in the veracode.config file')
         """ optional parameters """
         static_parser.add_argument("-n", "--name", type=str, help="the name of the scan")
