@@ -3,6 +3,15 @@
 A Command Line Interface for using Veracode Services in a software development environment that uses Git for source control. 
 Configuration of the Veracode Services is managed via JSON data structures that are stored and managed with the repository and which are Branch aware.
 
+### Veracode Services
+
+The commands available in `veracode-cli` are grouped into Services:
+
+* `portfolio` service provides commands for onboarding a new application to the Veracode Platform and getting information about applications that are already onboarded
+* `static` service provides commands to configure and run Static Scans and to query the state of Scans
+* `results` service provides commands to retrieve Scan results and make decisions based upon them
+* `ticketing` service provides commands to synchronise Scan results with a ticketing system (e.g. JIRA) 
+
 ### Branch Aware?
 
 The `veracode.config` file is in JSON format and it's root object is a list. Each element in the list is a dictionary of configuration settings for all of the Veracode Services along with a `match_pattern` value. The `match_pattern` is a regular expression and when the `veracode-cli` is executed it will use the current branch name (either passed as an argument or retrieved from the current Git branch) to match against the `match_pattern` values of each dictionary and the first one which matches will be used as the configuration for the Service and Command that are executed.
