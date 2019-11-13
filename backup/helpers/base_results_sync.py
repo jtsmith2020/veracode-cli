@@ -11,6 +11,8 @@ import re
 from abc import ABC
 from abc import abstractmethod
 from lxml import etree
+import xmltodict
+
 
 class BaseSynchroniser(ABC):
 
@@ -21,9 +23,10 @@ class BaseSynchroniser(ABC):
     def get_flaw_actions(self, api, config):
         flaw_actions = []
         print("Downloading Results...")
-        """ get thedetailed report """
+        """ get the detailed report """
         detailed_report_xml = api.get_detailed_report(config["build_id"])
-        print("Building list of Flaw actions...")
+        print("Converting to dictionary...")
+
         """ find all flaws that could be relevant """
         ns = {'vc': 'https://www.veracode.com/schema/reports/export/1.0'}
         #root = ET.fromstring(detailed_report_xml)

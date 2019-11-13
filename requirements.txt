@@ -1,3 +1,4 @@
 veracode-api-signing
 antfs
 gitpython
+xmltodict

@@ -169,19 +169,22 @@ class VeracodeAPI:
                 retval[module_node.attrib.get("name")] = module_node.attrib.get("id")
             return retval
 
-    def results_ready(self, app_id, build_id):
+    def results_ready(self, app_id, build_id, sandbox_id=None):
         """ Returns boolean for whether or not the build has results ready."""
-        build_info_xml =  self._get_request(self.baseurl + "/5.0/getbuildinfo.do", params={"app_id": app_id,
-                                                                              "build_id": build_id})
-        ns = {'vc': 'https://analysiscenter.veracode.com/schema/4.0/buildinfo'}
-        root = ET.fromstring(build_info_xml)
-        find_build_query = "./vc:build"
-        build_node = root.findall(find_build_query, ns)
-        if len(build_node) == 1:
-            ready = "true" == build_node[0].attrib.get("results_ready")
+        if sandbox_id is None:
+            build_info_xml =  self._get_request(self.baseurl + "/5.0/getbuildinfo.do", params={"app_id": app_id,
+                                                                                               "build_id": build_id})
         else:
-            ready = False
-        return ready
+            build_info_xml = self._get_request(self.baseurl + "/5.0/getbuildinfo.do", params={"app_id": app_id,
+                                                                                              "build_id": build_id,
+                                                                                              "sandbox_id": sandbox_id})
+        #print(str(build_info_xml))
+        #x = re.search('results_ready="true"', str(build_info_xml))
+        #print("x is " + x)
+        if re.search('results_ready="true"', str(build_info_xml)) is None:
+            return False
+        else:
+            return True
 
     def add_comment(self, build_id, flaw_id, comment):
         return self._get_request(self.baseurl + "/updatemitigationinfo.do", params={"build_id": build_id,
@@ -189,18 +192,21 @@ class VeracodeAPI:
                                                                                 "comment": comment,
                                                                                 "flaw_id_list": flaw_id})
 
-    def get_latest_build_id(self, app_id):
-        build_list_xml = self._get_request(self.baseurl + "/5.0/getbuildlist.do", params={"app_id": app_id})
+    def get_latest_build_id(self, app_id, sandbox_id=None):
+        if sandbox_id is None:
+            build_list_xml = self._get_request(self.baseurl + "/5.0/getbuildlist.do", params={"app_id": app_id})
+        else:
+            build_list_xml = self._get_request(self.baseurl + "/5.0/getbuildlist.do", params={"app_id": app_id,
+                                                                                              "sandbox_id": sandbox_id})
+        #print(str(build_list_xml))
+        build_ids = re.findall('build_id="(.*?)"', str(build_list_xml))
+        #print(build_ids)
 
-        ns = {'vc': 'https://analysiscenter.veracode.com/schema/2.0/buildlist'}
-        root = ET.fromstring(build_list_xml)
-        find_build_query = "./vc:build"
-        build_nodes = root.findall(find_build_query, ns)
-        i = len(build_nodes) - 1
+        i = len(build_ids) - 1
         build_id = None
         while build_id is None:
-            test = build_nodes[i].attrib.get("build_id")
-            if self.results_ready(app_id, test):
+            test = str(build_ids[i])
+            if self.results_ready(app_id, test, sandbox_id):
                 build_id = test
             else:
                 i = i - 1
