@@ -1,7 +1,7 @@
 FROM python:3.7.0-slim
 RUN apt-get -y update
 
-ADD veracode/veracode.py /veracode/main.py
+ADD veracode/veracode.py /veracode/veracode.py
 ADD requirements.txt /veracode/requirements.txt
 ADD veracode/helpers/* /veracode/helpers/
 ADD veracode/services/* /veracode/services/
