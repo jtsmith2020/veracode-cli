@@ -1,9 +1,15 @@
-image: docker:stable
+stages:
+  -  publish
 
-
-build:
-  stage: build
+publish-to-docker-hub:
+  stage: publish
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin
   script:
     - docker build -t vcodejtsmith/veracode-cli:latest .
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin
     - docker push vcodejtsmith/veracode-cli:latest
+  after_script:
+    -  docker logout
