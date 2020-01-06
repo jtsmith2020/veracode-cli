@@ -83,19 +83,18 @@ class ticketing(Service):
                     return "Unabkle to find the sandbox_id"
             print('Using Sandbox "'+ sandbox_name + '" (sandbox_id="' + sandbox_id + '")')
 
-        """ download the detailed report and convcert to JSON """
+        """ download the detailed report and convert to Dict """
         build_id = api.get_latest_build_id(the_config["portfolio"]["app_id"], sandbox_id)
         detailed_report_xml = api.get_detailed_report(build_id)
         results = xmltodict.parse(detailed_report_xml)
-
+        """ DEBUG: output the results to a file """
         with open('results.json', 'w') as outfile:
             json.dump(results, outfile, indent=2)
-
         """ synchronise the tickets """
         #self.sync_results(self, the_config, results)
         return "Complete"
 
-    def sync_results(self, config, res, severity=None, category=None, cwe=None, flaw=None):
+    def parse_results(self, config, res, severity=None, category=None, cwe=None, flaw=None):
         if flaw is not None:
             """ is this a flaw that needs to be synched? """
 
@@ -140,6 +139,8 @@ class ticketing(Service):
             for k, v in cwe:
                 if k == "staticflaws":
                     for f in v["flaw"]:
+                        """ SHOULD WE BE DECIDING WHETHER OR NOT TO TICKET THE FLAW HERE? 
+                            COULD BE BASED ON POLICY AFFECTING OR NEW   """
                         self.parse_results(res, severity, category, cwe, f)
         elif category is not None:
             """ parse the category """

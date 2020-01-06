@@ -1,0 +1,9 @@
+image: docker:stable
+
+
+build:
+  stage: build
+  script:
+    - docker build -t vcodejtsmith/veracode-cli:latest .
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin
+    - docker push vcodejtsmith/veracode-cli:latest
