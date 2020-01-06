@@ -1,5 +1,7 @@
 FROM python:3.7.0-slim
-RUN apt-get -y update
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y git
 
 ADD veracode/veracode.py /veracode/veracode.py
 ADD requirements.txt /veracode/requirements.txt
