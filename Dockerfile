@@ -7,6 +7,8 @@ ADD veracode/helpers/* /veracode/helpers/
 ADD veracode/services/* /veracode/services/
 ADD debug.sh /veracode/bin/debug.sh
 RUN ["chmod", "+x", "/veracode/bin/debug.sh"]
+ADD veracode-cli /veracode/bin/veracode-cli
+RUN ["chmod", "+x", "/veracode/bin/veracode-cli"]
 
 RUN pip install -r veracode/requirements.txt
 
