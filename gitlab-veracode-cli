@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-echo Launching Veracode CLI....
 if [ -z "$CI_COMMIT_BRANCH" ]
 then
       python /veracode/veracode.py -b master "$@"

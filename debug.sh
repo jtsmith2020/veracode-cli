@@ -76,5 +76,4 @@ then
 fi
 
 echo
-echo Launching Veracode CLI....
 python /veracode/veracode.py

@@ -8,9 +8,10 @@ import services
 from services.base_service import Service
 from helpers.json_skeletons import JSONSkeleton
 from importlib import import_module
-from helpers import VeracodeError
 
 from helpers.api import VeracodeAPI
+from helpers.exceptions import VeracodeAPIError
+from helpers.exceptions import VeracodeError
 
 
 readme = """
@@ -47,6 +48,13 @@ This Command Line Interface for Veracode is based on 3 key principles:
 #
 def run():
     logging.basicConfig(level=logging.WARN)
+    print("""                                   _                 _ _ 
+__   _____ _ __ __ _  ___ ___   __| | ___        ___| (_)
+\ \ / / _ \ '__/ _` |/ __/ _ \ / _` |/ _ \_____ / __| | |
+ \ V /  __/ | | (_| | (_| (_) | (_| |  __/_____| (__| | |
+  \_/ \___|_|  \__,_|\___\___/ \__,_|\___|      \___|_|_|
+                                                         
+""")
     try:
         """ setup the main arugment parser """
         parser = argparse.ArgumentParser(prog='veracode-cli', description='A Command Line Interface for interacting with Veracode Services using a local JSON configuration file to manage the settings that are used. For more information use the readme service.')
