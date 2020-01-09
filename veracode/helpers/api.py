@@ -33,14 +33,14 @@ class VeracodeAPI:
                 """ OK, try for the credentials file instead... """
                 auth_file = os.path.join(os.path.expanduser("~"), '.veracode', 'credentials')
                 if not os.path.exists(auth_file):
-                    raise VeracodeError("Missing Credentials File, have you set up ~/.veracode/credentials?")
+                    raise VeracodeError("""Credentials not found. You can supply the credentials as command line arguments, environment variables or by configuring a veracode credentials file. See README>md for more details.""")
                 config = configparser.ConfigParser()
                 config.read(auth_file)
                 credentials_section_name = os.environ.get("VERACODE_API_PROFILE", "default")
                 self.api_key_id = config.get(credentials_section_name, "VERACODE_API_KEY_ID")
                 self.api_key_secret = config.get(credentials_section_name, "VERACODE_API_KEY_SECRET")
                 if self.api_key_id is None or self.api_key_secret is None:
-                    raise VeracodeError("Unable to get Credentials")
+                    raise VeracodeError("Unable to get credentials from the veracode credentials file (~/.veracode/credentials)")
         else:
             """ use the id and key supplied as parameters """
             self.api_key_id = vid

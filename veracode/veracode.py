@@ -8,6 +8,7 @@ import services
 from services.base_service import Service
 from helpers.json_skeletons import JSONSkeleton
 from importlib import import_module
+from helpers import VeracodeError
 
 from helpers.api import VeracodeAPI
 
@@ -76,26 +77,29 @@ def run():
             logging.debug(args.branch)
 
         """ create the Veracode API instance """
-        api = VeracodeAPI(None, args.vid, args.vkey)
-        # should add some error handling here. ideally the VeracodeAPI should automatically check the outage API
-
-        if args.service == 'readme':
-            """ show the readme file information """
-            print(readme)
-        else:
-            """ load the config file """
-            try:
-                json_file = open('veracode.config')
-            except FileNotFoundError:
-                config = []
+        try:
+            api = VeracodeAPI(None, args.vid, args.vkey)
+            if args.service == 'readme':
+                """ show the readme file information """
+                print(readme)
             else:
-                with json_file:
-                    config = json.load(json_file)
-            """ load the relevant service class """
-            service = my_import('services.'+args.service+'.'+args.service)
-            instance = service()
-            """ execute """
-            print(instance.execute(args, config, api))
+                """ load the config file """
+                try:
+                    json_file = open('veracode.config')
+                except FileNotFoundError:
+                    config = []
+                else:
+                    with json_file:
+                        config = json.load(json_file)
+                """ load the relevant service class """
+                service = my_import('services.' + args.service + '.' + args.service)
+                instance = service()
+                """ execute """
+                print(instance.execute(args, config, api))
+        except VeracodeError as err:
+            print(" Error creating Veracode API wrapper.")
+            print(err)
+
 
 
 
