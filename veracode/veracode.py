@@ -107,6 +107,7 @@ __   _____ _ __ __ _  ___ ___   __| | ___        ___| (_)
         except VeracodeError as err:
             print(" Error creating Veracode API wrapper.")
             print(err)
+            print()
 
 
 
