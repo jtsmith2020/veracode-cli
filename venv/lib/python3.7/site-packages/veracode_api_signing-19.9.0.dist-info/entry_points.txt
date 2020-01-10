@@ -1,0 +1,6 @@
+[console_scripts]
+veracode_hmac_auth = veracode_api_signing.cli:main
+
+[httpie.plugins.auth.v1]
+httpie_veracode_hmac_auth = veracode_api_signing.plugin_httpie:HttpiePluginVeracodeHmacAuth
+

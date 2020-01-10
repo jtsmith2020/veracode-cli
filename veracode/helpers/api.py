@@ -139,7 +139,11 @@ class VeracodeAPI:
         if len(build_id) > 0:
             return build_id[0]
         else:
-            return "ERROR: " + str(build_xml)
+            err_msg = re.findall('<error>(.*?)</error>', str(build_xml))
+            if len(err_msg) > 0:
+                return "ERROR: " + err_msg[0]
+            else:
+                return "ERROR: Unknown error in create_build()"
 
     def begin_prescan(self, app_id, auto_scan, sandbox_id=None):
         if sandbox_id is None:
