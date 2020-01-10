@@ -139,7 +139,7 @@ class VeracodeAPI:
         if len(build_id) > 0:
             return build_id[0]
         else:
-            return None
+            return "ERROR: " + str(build_xml)
 
     def begin_prescan(self, app_id, auto_scan, sandbox_id=None):
         if sandbox_id is None:

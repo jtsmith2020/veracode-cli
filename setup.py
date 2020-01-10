@@ -5,7 +5,7 @@ setup(
     version="2019.10.1",
     packages=find_packages(),
     license="MIT",
-    author="jtsmith2020",
+    author="John Smith",
     url="https://github.com/jtsmith2020/veracode-cli",
     author_email="jtsmith@veracode.com",
     description="A rich CLI for interacting with Veracode services",
