@@ -104,6 +104,7 @@ __   _____ _ __ __ _  ___ ___   __| | ___        ___| (_)
                 instance = service()
                 """ execute """
                 print(instance.execute(args, config, api))
+                print()
         except VeracodeError as err:
             print(" Error creating Veracode API wrapper.")
             print(err)
