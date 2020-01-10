@@ -107,7 +107,7 @@ def run():
                 print(instance.execute(args, config, api))
                 print()
         except VeracodeError as err:
-            print(" Error creating Veracode API wrapper.")
+            print(" Error creating Veracode API wrapper. ")
             print(err)
             print()
 
