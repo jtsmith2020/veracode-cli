@@ -109,7 +109,7 @@ def run():
         except VeracodeError as err:
             print(" Error creating Veracode API wrapper. ")
             print(err)
-            print()
+            print(".")
 
 
 
