@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 if [ -z "$CI_COMMIT_BRANCH" ]
 then
-      python /veracode/veracode.py -b master "$@"
+      python /veracode/veracode-cli.py -b master "$@"
 else
-      python /veracode/veracode.py -b $CI_COMMIT_BRANCH "$@"
+      python /veracode/veracode-cli.py -b $CI_COMMIT_BRANCH "$@"
 fi
 

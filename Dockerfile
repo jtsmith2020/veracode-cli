@@ -3,7 +3,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y git
 
-ADD veracode/veracode.py /veracode/veracode.py
+ADD veracode/veracode-cli.py /veracode/veracode-cli.py
 ADD requirements.txt /veracode/requirements.txt
 ADD veracode/helpers/* /veracode/helpers/
 ADD veracode/services/* /veracode/services/
@@ -16,4 +16,4 @@ RUN ["chmod", "+x", "/veracode/bin/gitlab-veracode-cli"]
 
 RUN pip install -r veracode/requirements.txt
 
-CMD [ "python", "/veracode/veracode.py" ]
+CMD [ "python", "/veracode/veracode-cli.py" ]

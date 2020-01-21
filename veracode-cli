@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-python /veracode/veracode.py "$@"
+python /veracode/veracode-cli.py "$@"

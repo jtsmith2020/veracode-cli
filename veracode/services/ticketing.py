@@ -45,26 +45,27 @@ class ticketing(Service):
         logging.debug("configure called")
 
     def synchronise(self, args, config, api):
-        logging.debug("synchronise called")
-        """ find the proper configuration section """
-        the_config = None
-        for branch_type in config:
-            if re.match("^"+branch_type["branch_pattern"]+"$", str(args.branch)):
+        print("Service: Ticketing")
+        print("Command: Synchronize")
+        branch_type = None
+        for segment in config:
+            if re.match("^"+segment["branch_pattern"]+"$", str(args.branch)):
                 """ This is the config to use... """
-                the_config = branch_type
+                branch_type = segment
                 break
-        if the_config is None:
-            return "failed to find valid configuration for branch"
+        if branch_type is None:
+            return "No Static Scan Configuration found for branch '" + str(args.branch) + "'"
+
 
         """ Is this a sandbox scan branch ? """
         sandbox_name = None
         sandbox_id = None
-        if the_config["static_config"]["scan_type"] == "sandbox":
+        if branch_type["static_config"]["scan_type"] == "sandbox":
             sandbox_name = None
-            if the_config["static_config"]["sandbox_naming"] == "branch":
+            if branch_type["static_config"]["sandbox_naming"] == "branch":
                 sandbox_name = str(args.branch)
             elif the_config["static_config"]["sandbox_naming"] == "env":
-                sandbox_name = os.environ.get("VID")
+                sandbox_name = os.environ.get(the_config["static_config"]["sandbox_naming_env"])
             elif the_config["static_config"]["sandbox_naming"] == "param":
                 sandbox_name = str(args.sandbox)
             if sandbox_name is None:

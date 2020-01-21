@@ -109,6 +109,20 @@ class VeracodeAPI:
         # print(app_id)
         return app_id[0]
 
+    def results_ready(self, app_id, build_id, sandbox_id=None):
+        if sandbox_id is None:
+            bi_xml = self._get_request(self.baseurl + "/5.0/getbuildinfo.do", params={"app_id": app_id,
+                                                                                      "build_id": build_id})
+        else:
+            bi_xml = self._get_request(self.baseurl + "/5.0/getbuildinfo.do", params={"app_id": app_id,
+                                                                                      "sandbox_id": sandbox_id,
+                                                                                      "build_id": build_id})
+        rr = re.findall('results_ready="true"', str(bi_xml))
+        if len(rr) == 1:
+            return True
+        else:
+            return False
+
     def get_sandbox_id(self, app_id, sandbox_name):
         sbl_xml = self._get_request(self.baseurl + "/5.0/getsandboxlist.do", params={"app_id": app_id})
         sb_id = re.findall('sandbox_id="(.*?)" sandbox_name="' + sandbox_name + '"', str(sbl_xml))
@@ -141,9 +155,9 @@ class VeracodeAPI:
         else:
             err_msg = re.findall('<error>(.*?)</error>', str(build_xml))
             if len(err_msg) > 0:
-                return "ERROR: " + err_msg[0]
+                raise VeracodeError("Error in api.create_build(): " + err_msg[0])
             else:
-                return "ERROR: Unknown error in create_build()"
+                raise VeracodeError("Error in api.create_build(): Unknown")
 
     def begin_prescan(self, app_id, auto_scan, sandbox_id=None):
         if sandbox_id is None:
@@ -196,7 +210,7 @@ class VeracodeAPI:
                                                                                 "comment": comment,
                                                                                 "flaw_id_list": flaw_id})
 
-    def get_latest_build_id(self, app_id, sandbox_id=None):
+    def get_latest_published_build_id(self, app_id, sandbox_id=None):
         if sandbox_id is None:
             build_list_xml = self._get_request(self.baseurl + "/5.0/getbuildlist.do", params={"app_id": app_id})
         else:
@@ -215,6 +229,17 @@ class VeracodeAPI:
             else:
                 i = i - 1
         return build_id
+
+    def get_latest_build_id(self, app_id, sandbox_id=None):
+        if sandbox_id is None:
+            build_list_xml = self._get_request(self.baseurl + "/5.0/getbuildlist.do", params={"app_id": app_id})
+        else:
+            build_list_xml = self._get_request(self.baseurl + "/5.0/getbuildlist.do", params={"app_id": app_id,
+                                                                                              "sandbox_id": sandbox_id})
+        build_ids = re.findall('build_id="(.*?)"', str(build_list_xml))
+
+        i = len(build_ids) - 1
+        return str(build_ids[i])
 
 
 
