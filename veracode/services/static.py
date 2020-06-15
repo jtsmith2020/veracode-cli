@@ -143,7 +143,7 @@ class static(Service):
 
         """ get the static configuration """
         try:
-            static_config = self.get_config(args, config, api)
+            static_config = self.get_config(args, config, api, True)
             if not args.console:
                 print("Creating new Scan with name: " + self.scan_name)
             output["scan_name"] = self.scan_name
