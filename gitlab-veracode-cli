@@ -3,10 +3,6 @@ if [ -z "$CI_COMMIT_BRANCH" ]
 then
       python /veracode/veracode-cli.py -b master "$@"
 else
-      echo $CI_COMMIT_BRANCH
-      echo $VID
-      echo $VKEY
-
       python /veracode/veracode-cli.py -b "$CI_COMMIT_BRANCH" "$@"
 fi
 
