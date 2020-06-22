@@ -14,6 +14,6 @@ setup(
         "pytz >= 2018.4",
     ],
     entry_points={
-        "console_scripts": ["veracode-cli = veracode.veracode:start"]
+        "console_scripts": ["veracode-cli = veracode.veracode-cli:start"]
     }
 )

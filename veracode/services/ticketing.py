@@ -20,7 +20,7 @@ class ticketing(Service):
                                "flaws": []}
 
     def add_parser(self, parsers):
-        ticketing_parser = parsers.add_parser('ticketing', help='the ticketing service...')
+        ticketing_parser = parsers.add_parser('ticketing', help='the ticketing service is used to synchronise results from Veracode to a ticketing system such as JIRA or Azure DevOps')
         """ add sub-parsers for each of the commands """
         command_parsers = ticketing_parser.add_subparsers(dest='command', help='Ticketing Service Command description')
         """ synchronize """

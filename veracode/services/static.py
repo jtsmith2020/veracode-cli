@@ -9,7 +9,8 @@ import logging
 import re
 import time
 import xmltodict
-
+import traceback
+import sys
 
 from helpers.exceptions import VeracodeError
 from helpers.input import choice
@@ -42,20 +43,23 @@ class static(Service):
         static_parser.add_argument("-n", "--name", type=str, help="the name of the scan")
         static_parser.add_argument("-s", "--sandbox", type=str, help="the name of the sandbox to use (if scan type is sandbox)")
 
-    def execute(self, args, config, api, data):
+    def execute(self, args, config, api, context):
         logging.debug("static service executed")
-        if args.command == "configure":
-            return self.configure(args, config, api, data)
-        elif args.command == "start":
-            return self.start(args, config, api, data)
-        elif args.command == "results":
-            return self.results(args, config, api, data)
-        elif args.command == "ticket":
-            return self.ticket(args, config, api, data)
-        else:
-            print("unknown command: "+ args.command)
 
-    def configure(self, args, config, api):
+        if args.command == "configure":
+            return self.configure(args, config, api, context)
+        elif args.command == "start":
+            return self.start(args, config, api, context)
+        elif args.command == "results":
+            return self.results(args, config, api, context)
+        elif args.command == "ticket":
+            return self.ticket(args, config, api, context)
+        else:
+            output_data = {}
+            output_data["error"] = "Unknown Command provided to the Static Service (" + args.command + ")"
+            return output_data
+
+    def configure(self, args, config, api, context):
         logging.debug("configure called")
         """ for each branch type... """
         for branch_type in config:
@@ -79,71 +83,59 @@ class static(Service):
         return json.dumps(config, indent=2)
 
 
-    def get_config(self, args, config, api, create=None):
-        branch_type = None
-        for segment in config:
-            if re.match("^"+segment["branch_pattern"]+"$", str(args.branch)):
-                """ This is the config to use... """
-                branch_type = segment
-                break
-        if branch_type is None:
-            raise VeracodeError("No Static Scan Configuration found for branch '" + str(args.branch) + "'")
+    def validate_config(self, args, config, api, create=None):
 
         """ Is this a sandbox scan? """
         sandbox_name = None
         sandbox_id = None
-        if branch_type["static_config"]["scan_type"] == "sandbox":
+        if config["static_config"]["scan_type"] == "sandbox":
             self.sandbox_name = None
-            if branch_type["static_config"]["sandbox_naming"] == "branch":
+            if config["static_config"]["sandbox_naming"] == "branch":
                 self.sandbox_name = str(args.branch)
-            elif branch_type["static_config"]["sandbox_naming"] == "env":
+            elif config["static_config"]["sandbox_naming"] == "env":
                 self.sandbox_name = os.environ.get("VID")
-            elif branch_type["static_config"]["sandbox_naming"] == "param":
+            elif config["static_config"]["sandbox_naming"] == "param":
                 self.sandbox_name = str(args.sandbox)
             if self.sandbox_name is None:
                 """ we cannot do a sandbox scan without a name """
                 raise VeracodeError("Unable to generate the name for the sandbox.")
             """ find the id for the sandbox """
-            self.sandbox_id = api.get_sandbox_id(branch_type["portfolio"]["app_id"], self.sandbox_name)
+            self.sandbox_id = api.get_sandbox_id(config["portfolio"]["app_id"], self.sandbox_name)
             if self.sandbox_id is None:
                 if create is None:
                     raise VeracodeError("Unable to find sandbox '" + self.sandbox_name + "'")
                 else:
                     """ try creating the sandbox """
                     print("Sandbox with name '" + self.sandbox_name + "' not found. Trying to create...")
-                    self.sandbox_id = api.create_sandbox(branch_type["portfolio"]["app_id"], self.sandbox_name)
+                    self.sandbox_id = api.create_sandbox(config["portfolio"]["app_id"], self.sandbox_name)
                     if self.sandbox_id is None:
                         """ we cannot do a sandbox scan without an id """
                         print("")
                         raise VeracodeError("Unable to create a sandbox with name '" + self.sandbox_name + "'")
         """ generate the scan name """
-        if branch_type["static_config"]["scan_naming"] == "timestamp":
+        if config["static_config"]["scan_naming"] == "timestamp":
             self.scan_name = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S UTC]")
-        elif branch_type["static_config"]["scan_naming"] == "env":
+        elif config["static_config"]["scan_naming"] == "env":
             self.scan_name = os.environ.get(config["scan_name_env"])
-        elif branch_type["static_config"]["scan_naming"] == "param":
+        elif config["static_config"]["scan_naming"] == "param":
             self.scan_name = args.name
-        elif branch_type["static_config"]["scan_naming"] == "git":
+        elif config["static_config"]["scan_naming"] == "git":
             """ need to generate a GIT scan name"""
             self.scan_name = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S UTC]")
         else:
             """ no valid scan name """
             raise VeracodeError("No Valid Scan Name. Start static scan failed")
         """ return the config object """
-        return branch_type
+        return config
 
 
-    def start(self, args, config, api, data):
-        if not args.console:
-            print("Service: Static")
-            print("Command: Start")
-            print()
+    def start(self, args, config, api, context):
         output = {}
         output["branch"] = args.branch
 
         """ get the static configuration """
         try:
-            static_config = self.get_config(args, config, api, True)
+            static_config = self.validate_config(args, config, api, True)
             if not args.console:
                 print("Creating new Scan with name: " + self.scan_name)
             output["scan_name"] = self.scan_name
@@ -173,27 +165,31 @@ class static(Service):
         except VeracodeError as err:
             output["error"] = str(err)
             return output
+        except:
+            output["error"] = "Unexpected Exception #005 (static.py) : " + str(sys.exc_info()[0])
+            return output
 
 
 
 
-    def results(self, args, config, api, data):
+    def results(self, args, config, api, context):
         if not args.console:
             print("Service: Static")
             print("Command: Results")
-            print()
+            print("Context:")
+            print(context)
         output = {}
 
         """ Was there an error in the previous command? """
-        if "error" in data:
-            output["error"] = "Error in previous command. Unable to proceed. The error was '" + data.error + "'"
+        if "error" in context:
+            output["error"] = "Error in previous command. Unable to proceed. The error was '" + context.error + "'"
             if not args.console:
                 print(output.error)
             return output
 
         """ Does the branch match the previous command? """
-        if data["branch"] != args.branch:
-            output["error"] = "Active Branch is not the same as the previous command. Active Branch is '" + args.branch + "' but for the previous command it was '" + data.branch + "'"
+        if context["branch"] != args.branch:
+            output["error"] = "Active Branch is not the same as the previous command. Active Branch is '" + args.branch + "' but for the previous command it was '" + context.branch + "'"
             if not args.console:
                 print(output.error)
             return output
@@ -210,12 +206,12 @@ class static(Service):
                 """ It's a policy or sandbox scan """
                 print("DEBUG: its a policy or sandbox scan")
                 """ Do we have a build_id ?"""
-                if data["build_id"] is not None:
+                if context["build_id"] is not None:
                     """ wait for the scan results to be ready, up to timeout... """
                     print("time is " +str(int(round(time.time()))))
                     timeout = int(round(time.time())) + static_config["static_config"]["results_timeout"]
                     print("timeout is " +str(timeout))
-                    ready = api.results_ready(static_config["portfolio"]["app_id"], data["build_id"], self.sandbox_id)
+                    ready = api.results_ready(static_config["portfolio"]["app_id"], context["build_id"], self.sandbox_id)
                     if not args.console:
                         if not ready:
                             print("Results are not ready. Waiting for up to " + str(static_config["static_config"]["results_timeout"]) + " seconds...")
@@ -224,18 +220,18 @@ class static(Service):
                     while not ready and timeout > int(round(time.time())):
                         print("sleeping")
                         time.sleep(15)
-                        ready = api.results_ready(static_config["portfolio"]["app_id"], data["build_id"], self.sandbox_id)
+                        ready = api.results_ready(static_config["portfolio"]["app_id"], context["build_id"], self.sandbox_id)
 
                     """ are the results ready? """
                     if not ready:
                         output["error"] = "Results were not ready within the timeout."
 
                     """ download the results as xml and convert to dict """
-                    detailed_report_xml = api.get_detailed_report(data["build_id"])
+                    detailed_report_xml = api.get_detailed_report(context["build_id"])
                     output["results"] = xmltodict.parse(detailed_report_xml)
                 else:
                     """ It's a policy/sandbox scan and we have no build_id"""
-                    data["error"] = "No build_id. Unable to get results"
+                    context["error"] = "No build_id. Unable to get results"
             elif static_config["static_config"]["scan_type"] == "pipeline":
                 """ this is where we would handle results for the pipeline scanner"""
 
