@@ -9,7 +9,6 @@ The commands available in `veracode-cli` are grouped into Services:
 
 * `portfolio` service provides commands for onboarding a new application to the Veracode Platform and getting information about applications that are already onboarded
 * `static` service provides commands to configure and run Static Scans and to query the state of Scans
-* `results` service provides commands to retrieve Scan results and make decisions based upon them
 * `ticketing` service provides commands to synchronise Scan results with a ticketing system (e.g. JIRA) 
 
 Each service (except `portfolio`) also provides a `configure` command which provides an interactive configuration interface that will assist in correctly creating the `veracode.config` file.
@@ -22,13 +21,15 @@ The `veracode.config` file is in JSON format and it's root object is a list. Eac
 
 `pip install veracode-cli`
 
+NOTE: this bit isn't done yet
+
 # Getting Started
 
 The `portfolio` service will help you to create a `veracode.config` file in the root of your git repository. This configuration fill will identify the Veracode Application Profile that will be used for scanning and reporting on the application. If there is an existing Application Profile you can select it or if not then you can create a new Application Profile using the `portfolio` service.
 
 All other Veracode (e.g. `static`, `ticketing`, etc.) provide a `configure` command which will guide you through the necessary steps to customise the `veracode.config` file for your repository.
 
-Once you have created and configured the `veracode.config` file it should be committed to your repository and merged to all existing branches. This file will then enable the `veracode-cli` to be execute the Veracode Services correctly with no further configuration rergardless of the branch you are working on.
+Once you have created and configured the `veracode.config` file it should be committed to your repository and merged to all existing branches. This file will then enable the `veracode-cli` to execute the Veracode Services correctly with no further configuration rergardless of the branch you are working on.
 
 Getting started with using the Veracode Services with `veracode-cli` involves the following steps:
 * Clone the repository you want to add Veracode Services to
@@ -131,12 +132,6 @@ optional arguments:
                         encompassing Policy Scanning, Sandbox Scanning
                         and CI Scanning
                         
-`dynamic`               access to the Dynamic Analysis technology
-
-`findings`              access to scan results
-
-`admin`                 access to administrative functions
-
 `ticketing`             integration with ticketing systems such as JIRA and Azure DevOps
 
 ## `portfolio` Service
@@ -160,20 +155,7 @@ The `static` service provides commands to start a static analysis scan and to aw
 
 `start` start a static analysis scan
 
-`await` wait for the completion of a static analysis scan
-
-## `dynamic` Service
-The `dynamic` service provides commands to start a dynamic analysis scan and to await the completion of a dynamic analysis scan
-
-### Command List
-
-`start` start a dynamic analysis scan
-
-`await` wait for the completion of a dynamic analysis scan
-
-## `findings` Service
-
-## `admin` Service
+`results` wait for the completion of a static analysis scan and then download the results
 
 ## `ticketing` Service
 

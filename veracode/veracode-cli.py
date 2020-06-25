@@ -5,7 +5,7 @@ from git import Repo
 import os
 import sys
 import re
-
+import traceback
 import services
 from services.base_service import Service
 from helpers.json_skeletons import JSONSkeleton
@@ -94,6 +94,8 @@ def run():
                             help="Branch name to be used to select configuration settings")
         parser.add_argument("-c", "--console", action="store_true",
                             help="Should the output be sent the console. If this is enabled then all other console output will be suppressed")
+        parser.add_argument("-e", "--error", action="store_true",
+                            help="Should the command fail if the veracode-cli.output file contains an error")
         """ add sub-parsers for each of the services """
         service_parsers = parser.add_subparsers(dest='service', help='Veracode service description')
         readme_parser = service_parsers.add_parser('readme', help='show the detailed readme information')
@@ -147,7 +149,7 @@ def run():
                     api = VeracodeAPI(None, args.vid, args.vkey)
                 except:
                     """ error message about incorrect credentials """
-                    print(f'{"exception":10} : {"Unexpected Exception #001 :", sys.exc_info()[0]}')
+                    print(f'{"exception":10} : Unexpected Exception #001 : {sys.exc_info()[0]}')
         except UnboundLocalError as ule1:
             """ Unexpected Exception """
             print("Different Unexpected error creating the API object : " + str(ule1))
@@ -210,6 +212,13 @@ def run():
             context = json.load(sys.stdin.readlines())
         """ initialise the output data with the previous context """
         output_data = context
+        """ Was there an error in the previous context? """
+        if args.error is True and "error" in context and context["error"] is not None:
+            output_data["error"] = f'{"exception":10} : Error in veracode-cli.context - {context["error"]}'
+            if not args.console:
+                print(output["error"])
+            return output
+
         output_data["error"] = None
 
         if args.service is None:
@@ -245,7 +254,8 @@ def run():
                 for arg in vars(args):
                     if arg is not "service" and arg is not "command" and arg is not "vid" and arg is not "vkey" and arg is not "None":
                         print(f'{arg:10} : {getattr(args, arg)}')
-
+                print(f'{"context":10} : {context}')
+                print()
             """ load the relevant service class """
             service = my_import('services.' + args.service + '.' + args.service)
             instance = service()
@@ -262,9 +272,14 @@ def run():
     except UnboundLocalError as ule:
         if not args.console:
             print(f'{"exception":10} : {"UnboundLocalError -  " + str(ule)}')
+    except AttributeError as ae:
+        if not args.console:
+            print(f'{"exception":10} : {"AttributeError -  " + str(ae)}')
+            traceback.print_exc()
     except:
         """ Unexpected Exception """
-        print(f'{"exception":10} : {"Unexpected Exception #005 :", sys.exc_info()[0]}')
+        print(f'{"exception":10} : Unexpected Exception #005 - {sys.exc_info()[0]}')
+        traceback.print_exc()
     finally:
         if not args.console:
             print()
@@ -275,7 +290,7 @@ def run():
 
             """ send the output to veracode-cli.output """
             with open('veracode-cli.output', 'w') as outfile:
-                json.dump(output_data, outfile)
+                json.dump(output_data, outfile, indent=4, sort_keys=True)
         """ Always output to the console """
         print(output_data)
         if "error" in output_data:

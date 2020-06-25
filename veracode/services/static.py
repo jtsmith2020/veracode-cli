@@ -42,6 +42,7 @@ class static(Service):
         """ optional parameters """
         static_parser.add_argument("-n", "--name", type=str, help="the name of the scan")
         static_parser.add_argument("-s", "--sandbox", type=str, help="the name of the sandbox to use (if scan type is sandbox)")
+        static_parser.add_argument("-i", "--id", type=str, help="the build ID of the scan to use.")
 
     def execute(self, args, config, api, context):
         logging.debug("static service executed")
@@ -173,71 +174,96 @@ class static(Service):
 
 
     def results(self, args, config, api, context):
-        if not args.console:
-            print("Service: Static")
-            print("Command: Results")
-            print("Context:")
-            print(context)
         output = {}
 
-        """ Was there an error in the previous command? """
-        if "error" in context:
-            output["error"] = "Error in previous command. Unable to proceed. The error was '" + context.error + "'"
-            if not args.console:
-                print(output.error)
-            return output
-
         """ Does the branch match the previous command? """
-        if context["branch"] != args.branch:
-            output["error"] = "Active Branch is not the same as the previous command. Active Branch is '" + args.branch + "' but for the previous command it was '" + context.branch + "'"
+        if "branch" in context and context["branch"] != args.branch:
+            output["error"] = f'Active Branch does not match with veracode-cli.context. Active Branch is {args.branch} but context.branch is {context.branch}'
             if not args.console:
-                print(output.error)
+                print(f'{"error":10} : {output["error"]}')
             return output
 
         try:
-            """ get the static configuration """
-            static_config = self.get_config(args, config, api)
+            """ validate the static configuration """
+            static_config = self.validate_config(args, config, api)
 
             if not args.console:
-                print("Scan type is '" + static_config["static_config"]["scan_type"] + "'")
+                print(f'{"info":10} : Scan type is {static_config["static_config"]["scan_type"]}')
 
             """ What type of scan? """
             if static_config["static_config"]["scan_type"] == "sandbox" or static_config["static_config"]["scan_type"] == "policy":
                 """ It's a policy or sandbox scan """
-                print("DEBUG: its a policy or sandbox scan")
-                """ Do we have a build_id ?"""
-                if context["build_id"] is not None:
-                    """ wait for the scan results to be ready, up to timeout... """
-                    print("time is " +str(int(round(time.time()))))
-                    timeout = int(round(time.time())) + static_config["static_config"]["results_timeout"]
-                    print("timeout is " +str(timeout))
-                    ready = api.results_ready(static_config["portfolio"]["app_id"], context["build_id"], self.sandbox_id)
-                    if not args.console:
-                        if not ready:
-                            print("Results are not ready. Waiting for up to " + str(static_config["static_config"]["results_timeout"]) + " seconds...")
-                        else:
-                            print("Results are ready")
-                    while not ready and timeout > int(round(time.time())):
-                        print("sleeping")
-                        time.sleep(15)
-                        ready = api.results_ready(static_config["portfolio"]["app_id"], context["build_id"], self.sandbox_id)
-
-                    """ are the results ready? """
-                    if not ready:
-                        output["error"] = "Results were not ready within the timeout."
-
-                    """ download the results as xml and convert to dict """
-                    detailed_report_xml = api.get_detailed_report(context["build_id"])
-                    output["results"] = xmltodict.parse(detailed_report_xml)
+                sandbox_id = None
+                if "sandbox_id" in context and context["sandbox_id"] is not None:
+                    sandbox_id = context["sandbox_id"]
+                build_id = None
+                """ Do we have a build_id  in the context? """
+                if "build_id" in context and context["build_id"] is not None:
+                    """ don't think anything needs to happen here. """
+                    build_id = context["build_id"]
+                elif args.id is not None:
+                    """ don't think anything needs to happen here either. """
+                    build_id = args.id
                 else:
-                    """ It's a policy/sandbox scan and we have no build_id"""
-                    context["error"] = "No build_id. Unable to get results"
+                    """ need to find the latest build_id for the type of scan"""
+                    if static_config["static_config"]["scan_type"] == "sandbox":
+                        if sandbox_id is not None:
+                            if not args.console:
+                                print(f'{"info":10} : Getting latest build_id (app_id={static_config["portfolio"]["app_id"]}, sandbox_id={sandbox_id})')
+                            build_id = api.get_latest_build_id(static_config["portfolio"]["app_id"], sandbox_id)
+                        else:
+                            """ error - no sandbox id """
+                            if not args.console:
+                                print(f'{"error":10} : Scan type is sandbox but no sandbox ID could be found {str(err)}')
+                            output["error"] = str(err)
+
+                    else:
+                        if not args.console:
+                            print(f'{"info":10} : Getting latest build_id (app_id={static_config["portfolio"]["app_id"]})')
+                            build_id = api.get_latest_build_id(static_config["portfolio"]["app_id"])
+
+
+                if build_id is None:
+                    """ Problem, cannot proceed without a build_id """
+
+
+                """ wait for the scan results to be ready, up to timeout... """
+                print(f'{"info":10} : Current time is {str(int(round(time.time())))}')
+                timeout = int(round(time.time())) + static_config["static_config"]["results_timeout"]
+                print(f'{"info":10} : Timeout is {str(timeout)}')
+                ready = api.results_ready(static_config["portfolio"]["app_id"], build_id, self.sandbox_id)
+                if not args.console:
+                    if not ready:
+                        print(f'{"info":10} : Results not ready. Try again in 15s...')
+                    else:
+                        print(f'{"info":10} : Results are ready')
+                while not ready and timeout > int(round(time.time())):
+                    print("sleeping")
+                    time.sleep(15)
+                    ready = api.results_ready(static_config["portfolio"]["app_id"], context["build_id"], self.sandbox_id)
+
+                """ are the results ready? """
+                if not ready:
+                    """ We have timed out and the results aren't ready """
+                    output["error"] = "Results were not ready within the timeout."
+                else:
+                    """ download the results as xml and convert to dict """
+                    detailed_report_xml = api.get_detailed_report(build_id)
+                    output["results"] = xmltodict.parse(detailed_report_xml)
             elif static_config["static_config"]["scan_type"] == "pipeline":
                 """ this is where we would handle results for the pipeline scanner"""
 
             return output
         except VeracodeError as err:
+            if not args.console:
+                print(f'{"exception":10} : Unexpected Exception (Static.py) #001 : {str(err)}')
             output["error"] = str(err)
+        except:
+            if not args.console:
+                print(f'{"exception":10} : Unexpected Exception (Static.py) #001 : {str(sys.exc_info()[0])}')
+            output["error"] = f'Unexpected Exception (Static.py) #001 : {sys.exc_info()[0]}'
+            traceback.print_exc()
+        finally:
             return output
 
 
