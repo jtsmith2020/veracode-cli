@@ -1,4 +1,4 @@
-FROM python:3.7.0-slim
+FROM python:3.7.0
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y git default-jre
