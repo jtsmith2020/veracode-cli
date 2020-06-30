@@ -1,7 +1,7 @@
 FROM python:3.7.0-slim
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y git
+    apt-get install -y git default-jre
 
 ADD veracode/veracode-cli.py /veracode/veracode-cli.py
 ADD requirements.txt /veracode/requirements.txt
@@ -16,4 +16,6 @@ RUN ["chmod", "+x", "/veracode/bin/gitlab-veracode-cli"]
 
 RUN pip install -r veracode/requirements.txt
 
+ADD https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip pipeline-scan-LATEST.zip
+RUN unzip pipeline-scan-LATEST.zip
 CMD [ "python", "/veracode/veracode-cli.py" ]
